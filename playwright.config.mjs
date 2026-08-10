@@ -4,6 +4,9 @@ const PORT = Number(process.env.PORT || 8080);
 
 export default defineConfig({
     testDir: './tests',
+    // tests/unit holds Node unit tests run by `node --test`; without this
+    // Playwright's default pattern would also pick up their *.test.mjs files.
+    testMatch: /.*\.spec\.mjs$/,
     // Rebuilds dist/ on every run. It cannot live in webServer.command, which is
     // skipped whenever an existing dev server is reused -- see tests/global-setup.mjs.
     globalSetup: './tests/global-setup.mjs',

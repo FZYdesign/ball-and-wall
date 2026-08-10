@@ -162,8 +162,39 @@ No build list to update: `npm run build` globs `js/app/**`.
 
 ## Testing
 
-`tests/` holds a Playwright suite that drives a real browser. `tests/game-page.mjs`
-carries the shared helpers; start there.
+Two layers. `npm test` runs lint, then both.
+
+### Unit tests — `tests/unit/`, `npm run test:unit`
+
+Node's built-in runner over the collision geometry (`core/math.js`) and the ball's
+bounce and speed logic (`entity/ball.js`). No browser, so it gates every push
+cheaply.
+
+`tests/unit/amd-harness.mjs` loads the **real** module sources into Node: the
+modules take every collaborator through their `define()` list, so registering a
+stub under a module id is enough to isolate them. Nothing is re-implemented. A
+dependency with no stub raises an error naming it, rather than arriving as
+`undefined` and failing confusingly later.
+
+Two details worth knowing before adding cases:
+
+- `entity/ball.js` exports a ready-made singleton; the constructor is reached via
+  `.constructor` so each test gets an independent ball. `init()` is skipped (it
+  needs a canvas and a preloaded sprite sheet) and `bitmap` is assigned directly.
+- Run them with the glob — `node --test "tests/unit/*.test.mjs"`. Passing the
+  directory makes Node treat it as a single file and fail with MODULE_NOT_FOUND.
+
+Every assertion here was mutation-checked: flipping the paddle's steering sign,
+dropping the speed cap, bouncing the wrong axis off a block, letting a glued
+paddle accelerate the ball, and removing `intercept`'s segment-bounds check each
+turn the suite red. The `n === 0` parallel guard in `intercept` is the one
+exception — removing it changes nothing, because the division then yields
+Infinity or NaN and the range checks reject those anyway.
+
+### End-to-end tests — `tests/*.spec.mjs`, `npm run e2e`
+
+A Playwright suite that drives a real browser. `tests/game-page.mjs` carries the
+shared helpers; start there.
 
 Two things make the specs deterministic:
 
@@ -207,9 +238,8 @@ regression coverage belongs in `tests/` so CI can run it.
 
 ## Known gaps
 
-- Coverage is smoke-level: boot, one round of gameplay, mobile layout and input,
-  the editor, and the production bundle. Ball/block collision maths, bonuses and
-  the black-hole blocks have no unit tests.
+- Unit coverage stops at `core/math.js` and `entity/ball.js`. Bonuses, bullets and
+  the black-hole blocks have none; the end-to-end layer only smoke-tests them.
 - `css/mobile.css` and `css/ie.css` are orphans -- nothing references them. The
   breakpoint stylesheets still reflow the old layout for viewports the scaled
   field now handles, so they could be pared back considerably.

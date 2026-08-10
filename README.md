@@ -60,18 +60,19 @@ Errors are real defects and fail CI. Warnings are pre-existing 2015-era style
 ## Test
 
 ```sh
+npm run test:unit    # collision geometry and ball physics, in Node
 npm run e2e          # Playwright suite (headless)
 npm run e2e:headed   # watch it run in a browser
 npm run e2e:ui       # Playwright UI mode
 npm run e2e:report   # open the last HTML report
 ```
 
-The suite drives a real browser through boot, a round of gameplay, mobile layout
-and touch input across emulated phones and tablets, the level editor, and the
-built production page. It uses the installed Google Chrome; if you do not have it,
-`npx playwright install chrome`.
+The unit tests need nothing but Node. The end-to-end suite drives a real browser
+through boot, a round of gameplay, mobile layout and touch input across emulated
+phones and tablets, the level editor, and the built production page — it uses the
+installed Google Chrome; if you do not have it, `npx playwright install chrome`.
 
-`npm test` runs lint, build and the suite together.
+`npm test` runs lint, unit tests, build and the browser suite together.
 
 ## Mobile
 
