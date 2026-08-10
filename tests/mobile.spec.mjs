@@ -5,7 +5,9 @@
  * pixels and stage pixels all differ.
  */
 import { test, expect, devices } from '@playwright/test';
-import { prepare, waitForBoot, readState, startRound, touchDrag, paintedRatio } from './game-page.mjs';
+import {
+    prepare, waitForBoot, readState, startRound, touchDrag, paintedRatio, waitForOverlayGone
+} from './game-page.mjs';
 
 /**
  * Playwright refuses `defaultBrowserType` inside a describe block because it
@@ -166,14 +168,24 @@ for (const label of PHONES) {
 
             const sample = () => page.evaluate(() => {
                 const ball = window.BallAndWall.entities.balls.reset().current();
+                const paddle = window.BallAndWall.entities.paddles.reset().current();
 
                 return {
                     x: ball ? Math.round(ball.getX()) : null,
                     y: ball ? Math.round(ball.getY()) : null,
+                    paddleX: paddle ? Math.round(paddle.getX()) : null,
                     time: window.BallAndWall.dashboard.getTime().get(),
                     paused: window.createjs.Ticker.getPaused()
                 };
             });
+
+            // Park the paddle away from the left edge, which is where a pointer
+            // reading taken from the toggle button would land it.
+            await touchDrag(page, [0.6]);
+
+            const before = await sample();
+
+            expect(before.paddleX).toBeGreaterThan(0);
 
             await page.locator('#a-hud-toggle').click();
             await page.waitForTimeout(400);
@@ -200,6 +212,10 @@ for (const label of PHONES) {
             expect(resumed.paused).toBe(false);
             expect(resumed.x !== held.x || resumed.y !== held.y, 'the ball must move again').toBe(true);
             expect(resumed.time, 'and the clock must carry on').toBeGreaterThan(held.time);
+            // The toggle sits at the far left. Reading a paddle position from a
+            // tap on it threw the paddle to x = 0 the moment the round resumed.
+            expect(resumed.paddleX, 'the paddle must resume where it was left')
+                    .toBe(before.paddleX);
         });
 
         test('keeps the authored aspect ratio', async ({ page }) => {
@@ -265,11 +281,15 @@ for (const label of PHONES) {
                 null,
                 { timeout: 20_000 }
             );
+            // The modal closes with a transition and input ignores taps that
+            // land on it, so touching before it is gone aims at the modal.
+            await waitForOverlayGone(page);
 
             const state = await readState(page);
 
             expect(state.blocks).toBeGreaterThan(0);
 
+            const stageWidth = await page.evaluate(() => window.BallAndWall.stage.getWidth());
             const paddleAt = () => page.evaluate(() => {
                 const paddle = window.BallAndWall.entities.paddles.reset().current();
 
@@ -277,12 +297,17 @@ for (const label of PHONES) {
             });
 
             await touchDrag(page, [0.15]);
+
+            // The paddle follows the pointer on the next frame, so poll for it
+            // rather than reading once after a fixed delay -- under the load of
+            // a full suite run that delay is not always enough.
+            await expect.poll(paddleAt).toBeLessThan(stageWidth * 0.4);
+
             const left = await paddleAt();
 
             await touchDrag(page, [0.85]);
-            const right = await paddleAt();
 
-            expect(right).toBeGreaterThan(left);
+            await expect.poll(paddleAt).toBeGreaterThan(left);
         });
 
         test('plays a released ball without runtime errors', async ({ page }) => {

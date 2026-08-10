@@ -175,6 +175,24 @@ export async function touchDrag(page, fractions) {
 }
 
 /**
+ * Waits for the modal and its overlay to leave the DOM.
+ *
+ * A window closes with a transition, so for a few hundred milliseconds after a
+ * round starts the modal is still covering the field. Input deliberately
+ * ignores pointer events that land on it, so anything driving the paddle has to
+ * wait or it is aiming at the modal.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function waitForOverlayGone(page) {
+    await page.waitForFunction(
+        () => !document.querySelector('.lbx-overlay') && !document.querySelector('.lbx-window'),
+        null,
+        { timeout: 10_000 }
+    );
+}
+
+/**
  * Starts a specific round from the rounds window, the way a player would.
  *
  * @param {import('@playwright/test').Page} page
@@ -190,4 +208,5 @@ export async function startRound(page, level = 0) {
         null,
         { timeout: 20_000 }
     );
+    await waitForOverlayGone(page);
 }

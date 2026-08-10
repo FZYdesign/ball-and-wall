@@ -138,6 +138,21 @@ Two consequences worth keeping in mind when touching this:
 - Returning to the tab must not resume a round that is being held for the panel,
   so the focus and visibility handlers check `isPausedByDashboard()` first.
 
+### Interface pointer events do not move the paddle
+
+`input/pointer.js` listens on `document`, and the paddle follows `pointer.x`
+every frame, clamped to the field. Anything that reads a position from a tap on
+the interface therefore drags the paddle with it — the dashboard toggle sits at
+the far left, so opening the panel used to throw the paddle to `x = 0` the moment
+the round resumed. Events landing on `UI_CHROME` (the toggle, modal windows and
+their overlay) are skipped, leaving the position untouched.
+
+This matters for tests too: a modal closes with a transition, so for a few
+hundred milliseconds after a round starts it is still covering the field and
+touches aim at it rather than the game. `waitForOverlayGone()` in
+`tests/game-page.mjs` is what makes touch-driven specs deterministic — without it
+they passed by moving the paddle through a stray tap on the modal.
+
 Input is Pointer Events only — one path for mouse, touch and pen. There is no
 touch/mouse fork and no UA sniffing in the input layer.
 

@@ -1,5 +1,17 @@
 import core from '../core/_.js';
 
+var
+    /**
+     * Interface that sits over the page rather than in the play field. Pointer
+     * events landing here are someone operating a control, not aiming the
+     * paddle -- the dashboard toggle in particular sits at the far left, so
+     * without this every tap on it threw the paddle to x = 0.
+     *
+     * @property UI_CHROME
+     * @static
+     */
+    UI_CHROME = '#a-hud-toggle, .lbx-window, .lbx-overlay';
+
 /**
  * Reports the pointer in *stage* coordinates -- the canvas backing-store
  * pixels the game's geometry is expressed in -- not CSS pixels. The canvas is
@@ -143,6 +155,11 @@ Pointer.prototype.onPointerMove = function(event) {
     // Secondary contacts of a multi-touch gesture would fight the primary one
     // over the paddle position.
     if ( event.isPrimary === false ) {
+        return;
+    }
+    // Operating the interface must not move the paddle. The position is left
+    // exactly as it was, so a round resumes where the player left it.
+    if ( event.target && event.target.closest && event.target.closest(UI_CHROME) ) {
         return;
     }
     if ( !coords.width || !coords.height ) {
