@@ -27,6 +27,11 @@
     <script src="js/_config_prod.js"></script>
 </head>
 <body oncontextmenu="return false;" class="class-index-page">
+    <!-- Small screens hide the dashboard so the field gets the whole viewport;
+         this slides it back in. app/stage.js shows it only when scaled. -->
+    <button id="a-hud-toggle" type="button" aria-label="Score and time" aria-expanded="false">
+        <span aria-hidden="true"></span>
+    </button>
     <div id="a-container">
         <div id="a-game-wrapper">
             <div id="a-game-canvases">

@@ -23,28 +23,22 @@ var
     BASE_HEIGHT = 462,
 
     /**
-     * The dashboard canvas. Its artwork is opaque right to the edges, so
-     * wherever it sits over the field it hides part of the game.
+     * The dashboard canvas. Its artwork is opaque right to the edges, so on a
+     * small screen it is parked this far to the left of the field -- outside
+     * the wrapper, which clips it -- and slid in only when asked for.
      *
      * @property DASHBOARD_WIDTH
      * @static
      */
-    DASHBOARD_WIDTH = 417,
-
-    /**
-     * Below this the score dial and the LED timer stop being readable, so the
-     * field gives up width rather than shrinking the dashboard any further.
-     *
-     * @property MIN_DASHBOARD_SCALE
-     * @static
-     */
-    MIN_DASHBOARD_SCALE = 0.5;
+    DASHBOARD_WIDTH = 417;
 
 function Stage() {
     this.element = $('#a-game-canvas');
     this.canvases = $('#a-game-canvases');
     this.wrapper = $('#a-game-wrapper');
     this.dashboard = $('#a-game-dashboard');
+    this.toggle = $('#a-hud-toggle');
+    this.dashboardVisible = false;
     this.scale = 1;
     this.stage = new createjs.Stage('a-game-canvas');
     this.bgFrontWidthHalfWidth = null;
@@ -68,6 +62,43 @@ function Stage() {
  */
 Stage.prototype.initEvents = function() {
     $(window).bind('resize orientationchange', $.proxy(this.fit, this));
+    this.toggle.bind('click', $.proxy(function(event) {
+        event.preventDefault();
+        this.showDashboard(!this.dashboardVisible);
+    }, this));
+};
+
+/**
+ * Slides the dashboard over the field, or parks it back outside.
+ *
+ * On a small screen the dashboard is hidden by default so the play field gets
+ * the whole viewport. Its artwork is opaque across the full canvas, so leaving
+ * it on screen either covers bricks or costs the field the width it needs.
+ *
+ * @method showDashboard
+ * @param {Boolean} visible
+ * @return {Stage}
+ */
+Stage.prototype.showDashboard = function(visible) {
+    this.dashboardVisible = Boolean(visible);
+
+    if ( this.scale === 1 ) {
+        // Full size keeps the original composition, where it is always shown.
+        this.dashboard.css({transform: '', pointerEvents: ''});
+
+        return this;
+    }
+    this.dashboard.css({
+        transform: this.dashboardVisible ? 'translateX(' + DASHBOARD_WIDTH + 'px)' : '',
+        // Parked it is still in the DOM just outside the clip, so stop it
+        // swallowing taps meant for the field behind it.
+        pointerEvents: this.dashboardVisible ? 'auto' : 'none'
+    });
+    this.toggle
+            .toggleClass('a-hud-toggle-open', this.dashboardVisible)
+            .attr('aria-expanded', this.dashboardVisible ? 'true' : 'false');
+
+    return this;
 };
 
 /**
@@ -93,8 +124,7 @@ Stage.prototype.fit = function() {
         // the wrapper's height.
         top = this.wrapper.length ? this.wrapper[0].getBoundingClientRect().top : 0,
         availableHeight = viewportHeight - (top > 0 && top < viewportHeight ? top : 0),
-        scale,
-        dashboardScale;
+        scale;
 
     scale = Math.min(
         viewportWidth / BASE_WIDTH,
@@ -104,30 +134,6 @@ Stage.prototype.fit = function() {
 
     if ( !isFinite(scale) || scale <= 0 ) {
         scale = 1;
-    }
-    // The gutter only pays for itself in landscape, which is the orientation
-    // the game asks for. A portrait screen has no width to spare -- reserving
-    // any would leave the field smaller than the dashboard -- and the rotate
-    // prompt is covering it regardless, so there the dashboard stays overlaid.
-    if ( viewportWidth >= viewportHeight ) {
-        // How much of the dashboard fits in the width the field leaves over. A
-        // landscape phone is proportionally wider than the 798x462 field, so
-        // there is usually spare width here: it is where the dashboard belongs.
-        dashboardScale = Math.min(scale, (viewportWidth - BASE_WIDTH * scale) / DASHBOARD_WIDTH);
-
-        if ( scale < 1 && dashboardScale < MIN_DASHBOARD_SCALE ) {
-            // Not enough spare width to keep the dashboard legible, so buy the
-            // room from the field. Losing a little play area beats covering it.
-            dashboardScale = Math.min(MIN_DASHBOARD_SCALE, viewportWidth / DASHBOARD_WIDTH);
-            scale = Math.min(
-                (viewportWidth - DASHBOARD_WIDTH * dashboardScale) / BASE_WIDTH,
-                availableHeight / BASE_HEIGHT,
-                1
-            );
-        }
-    }
-    if ( !isFinite(dashboardScale) || dashboardScale <= 0 ) {
-        dashboardScale = 0;
     }
     this.scale = scale;
 
@@ -140,38 +146,29 @@ Stage.prototype.fit = function() {
 
     if ( scale === 1 ) {
         this.wrapper.removeClass('a-scaled').css({width: '', height: ''});
-        this.canvases.css({transform: '', width: '', height: '', marginLeft: ''});
-        this.dashboard.css({transform: '', left: '', top: ''});
+        this.canvases.css({transform: '', width: '', height: ''});
+        this.dashboard.css({left: '', top: ''});
+        $(document.body).removeClass('a-scaled-layout');
+        this.showDashboard(true);
     } else {
-        // The dashboard sits beside the field rather than on it. It is a child
-        // of the scaled container, so its own transform is expressed relative
-        // to that scale -- the two multiply to dashboardScale on screen.
-        var relative = dashboardScale / scale,
-            gutter = Math.floor(DASHBOARD_WIDTH * dashboardScale);
-
         // A transform does not change the layout box, so the wrapper is sized
         // to the painted result and clips the oversized box inside it.
         // Without that the 798px field keeps widening the document and the
         // page scrolls sideways on a phone.
         this.wrapper.addClass('a-scaled').css({
-            // Floored, not rounded: rounding each part separately can add a
-            // pixel and start the page scrolling sideways again.
-            width: Math.floor(gutter + BASE_WIDTH * scale) + 'px',
+            width: Math.floor(BASE_WIDTH * scale) + 'px',
             height: Math.floor(BASE_HEIGHT * scale) + 'px'
         });
         this.canvases.css({
             width: BASE_WIDTH + 'px',
             height: BASE_HEIGHT + 'px',
-            marginLeft: gutter + 'px',
             transform: 'scale(' + scale + ')'
         });
-        this.dashboard.css({
-            top: 0,
-            // With no gutter (portrait) it falls back to overlaying the field's
-            // top-left corner, which is what the rotate prompt sits over.
-            left: -(DASHBOARD_WIDTH * relative) + 'px',
-            transform: relative ? 'scale(' + relative + ')' : ''
-        });
+        // Parked immediately left of the field, where the wrapper's overflow
+        // clips it. Sliding it in is then a translate of its own width.
+        this.dashboard.css({top: 0, left: -DASHBOARD_WIDTH + 'px'});
+        $(document.body).addClass('a-scaled-layout');
+        this.showDashboard(this.dashboardVisible);
     }
     input.pointer.updateStageCoords();
 

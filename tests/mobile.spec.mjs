@@ -65,46 +65,63 @@ for (const label of PHONES) {
             expect(consoleErrors, `console:\n${consoleErrors.join('\n')}`).toEqual([]);
         });
 
-        test('keeps the dashboard clear of the play field', async ({ page }) => {
-            // Portrait is told to rotate, and has no width to spare for a
-            // gutter, so the dashboard stays overlaid there.
-            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
-
+        test('hides the dashboard until asked for, and gives the field the viewport', async ({ page }) => {
             await prepare(page);
             await page.goto('/index_dev.html');
             await waitForBoot(page);
             await page.waitForTimeout(500);
 
-            // A viewport big enough to render the field at 1:1 keeps the
-            // original composition, dashboard overlap included. Only the scaled
-            // layout moves it into a gutter.
+            // A viewport big enough for 1:1 keeps the original composition,
+            // where the dashboard is always on screen.
             const scale = await page.evaluate(() => window.BallAndWall.stage.scale);
 
             test.skip(scale === 1, 'renders at 1:1, so the desktop composition applies');
 
-            const boxes = await page.evaluate(() => {
-                const rect = (id) => {
-                    const { left, top, right, bottom } = document.getElementById(id).getBoundingClientRect();
+            const measure = () => page.evaluate(() => {
+                const rect = (id) => document.getElementById(id).getBoundingClientRect();
+                const field = rect('a-game-canvas');
+                const dashboard = rect('a-game-dashboard');
+                const toggle = document.getElementById('a-hud-toggle').getBoundingClientRect();
+                const across = (a, b) => Math.max(
+                    0,
+                    Math.min(a.right, b.right) - Math.max(a.left, b.left)
+                );
 
-                    return { left, top, right, bottom };
+                return {
+                    fieldWidth: Math.round(field.width),
+                    // How much of the field the dashboard actually covers.
+                    covered: Math.round(across(dashboard, field)),
+                    toggleOverField: across(toggle, field) > 0
+                        && Math.min(toggle.bottom, field.bottom) - Math.max(toggle.top, field.top) > 0,
+                    // Widest the field could be in this viewport.
+                    maxFieldWidth: Math.round(Math.min(
+                        window.innerWidth,
+                        (798 / 462) * window.innerHeight
+                    ))
                 };
-
-                return { field: rect('a-game-canvas'), dashboard: rect('a-game-dashboard') };
             });
 
-            // The dashboard artwork is opaque edge to edge, so any intersection
-            // hides bricks. It used to be overlaid on the field's top-left,
-            // covering roughly the first third of the wall.
-            const overlaps = !(
-                boxes.dashboard.right <= boxes.field.left + 1
-                    || boxes.dashboard.left >= boxes.field.right - 1
-                    || boxes.dashboard.bottom <= boxes.field.top + 1
-                    || boxes.dashboard.top >= boxes.field.bottom - 1
-            );
+            const closed = await measure();
 
-            expect(overlaps, `dashboard ${JSON.stringify(boxes.dashboard)} over field ${JSON.stringify(boxes.field)}`)
-                    .toBe(false);
-            expect(boxes.dashboard.left).toBeGreaterThanOrEqual(0);
+            // The dashboard artwork is opaque edge to edge, so on screen it
+            // either covers bricks or costs the field the width it needs.
+            expect(closed.covered, 'dashboard must not cover the field by default').toBe(0);
+            expect(closed.toggleOverField, 'the toggle belongs in the letterbox margin').toBe(false);
+            // The whole point of hiding it: the field gets the full viewport.
+            expect(closed.fieldWidth).toBeGreaterThanOrEqual(closed.maxFieldWidth - 2);
+
+            await page.locator('#a-hud-toggle').click();
+            await page.waitForTimeout(500);
+
+            const opened = await measure();
+
+            expect(opened.covered, 'opening it should slide it into view').toBeGreaterThan(50);
+            expect(opened.fieldWidth, 'and must not resize the field').toBe(closed.fieldWidth);
+
+            await page.locator('#a-hud-toggle').click();
+            await page.waitForTimeout(500);
+
+            expect((await measure()).covered, 'closing it should park it again').toBe(0);
         });
 
         test('keeps the authored aspect ratio', async ({ page }) => {

@@ -104,21 +104,25 @@ field — glued to the field at every size. Because the two approaches conflict,
 `#a-game-wrapper.a-scaled` in `css/common.css` neutralises the breakpoint offsets
 for the canvas area (`800-wide.css` adds 89px of top padding, for instance).
 
-**The dashboard sits in a gutter beside the field, not on it.** Its artwork is
-opaque edge to edge across the full 417×214 canvas, so anywhere over the field it
-hides bricks. A landscape phone is proportionally wider than the 798×462 field,
-so the width for that gutter is usually margin that would otherwise go unused —
-a Pixel 7 keeps its full field size. Where the margin is too small to keep the
-dial and the LED timer readable (`MIN_DASHBOARD_SCALE`), the field gives up width
-instead: covering the play area is worse than shrinking it.
+**On a scaled layout the dashboard is hidden, and slides in on demand.** Its
+artwork is opaque edge to edge across the full 417×214 canvas, so keeping it on
+screen either covers bricks or costs the field the width it needs. Hidden, the
+field gets the entire viewport.
 
-The dashboard therefore has its *own* scale. It is a child of the container the
-field scale is applied to, so its transform is expressed relative to that — the
-two multiply to the on-screen size.
+The mechanism is deliberately simple: the dashboard is parked at `left: -417px`,
+just outside the wrapper, whose `overflow: hidden` clips it. Showing it is a
+`translateX` of its own width, which the CSS transition animates. It also gets
+`pointer-events: none` while parked, because clipping does not reliably stop a
+clipped element swallowing taps.
 
-Two cases keep the original composition, overlap included: portrait, which has no
-width to spare and is showing the rotate prompt anyway, and any viewport large
-enough to render at 1:1.
+`#a-hud-toggle` drives it. The button is `position: fixed` in the top-left, which
+on a landscape phone lands in the letterbox margin beside the field — the field
+is height-constrained there, so that margin exists on every phone and the button
+never covers play area. `stage.fit()` puts `a-scaled-layout` on the body, and the
+toggle is only displayed under that class.
+
+A viewport large enough to render at 1:1 keeps the original composition, where
+the dashboard is always on screen and the toggle is hidden.
 
 Input is Pointer Events only — one path for mouse, touch and pen. There is no
 touch/mouse fork and no UA sniffing in the input layer.
