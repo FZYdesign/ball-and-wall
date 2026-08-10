@@ -10,32 +10,42 @@ npm install       # installs deps and syncs vendor/ (postinstall)
 npm run dev       # static server -> http://localhost:8080/index_dev.html
 npm run build     # dist/ bundles + regenerates index.html / levels-editor.html
 npm run lint      # ESLint
+npm run test:unit # collision geometry and ball physics, in Node
 npm run e2e       # Playwright end-to-end suite
-npm test          # lint + build + e2e
+npm test          # lint + unit + build + e2e
 ```
 
 `npm run dev -- --port 3000` changes the port.
 `npm run e2e:headed` watches the browser; `npm run e2e:ui` opens the Playwright UI.
 
-Open `index_dev.html` (uncompressed sources, loaded individually by RequireJS) while
-developing. `index.html` is **generated** by `npm run build` — never edit it by hand;
-edit `index_dev.html` instead. The same applies to `levels-editor.html`.
+Open `index_dev.html` while developing: the browser loads the ES modules straight
+from disk, so a reload picks up an edit with no build step. `index.html` is
+**generated** by `npm run build` — never edit it by hand; edit `index_dev.html`
+instead. The same applies to `levels-editor.html`.
 
 ## Architecture
 
-The game is ~98 AMD modules loaded by RequireJS. Every module declares a **named**
-module — `define('app/entity/ball', [deps], factory)` — which is what lets the
-production build concatenate them all into one file and still resolve.
+The game is ~99 ES modules. Development loads them natively
+(`<script type="module">`) with no bundler and no transform; `npm run build` hands
+the entry points to esbuild, which follows the import graph and emits one bundle
+per page.
 
-Most modules export a **singleton** (the file ends with `new X()` and returns the
-instance). The exceptions export constructors: `app/game`, `app/entity/_base`,
-`app/entities/_base`, `app/window/_base`, `app/core/builder`.
+Most modules `export default` a **singleton** (the file ends with `new X()`). The
+exceptions export constructors: `app/game`, `app/entity/_base`,
+`app/entities/_base`, `app/window/_base`, `app/core/builder`. Where a test needs
+the constructor behind a singleton, `instance.constructor` reaches it.
+
+There are no dependency cycles. Several modules import each other only to call
+methods later -- `stage` and `levels`, `entities/balls` and `entity/ball` -- which
+live bindings handle, because nothing dereferences an import while the modules are
+still evaluating.
 
 ```
 js/
   index.js               entry point: language, episode from #hash, boots app/Game
   _config_dev.js         globals: SS, API_ADDR, VERSION, REVISION, EPISODES, ENV
-  lib/                   vendored RequireJS + CreateJS/SoundJS (not from npm)
+  browser-lang.js        shared language detection for the entry points
+  lib/                   vendored CreateJS/SoundJS (not on npm)
   app/
     game.js              orchestrator: owns windows, wires all events, drives update()
     stage.js             CreateJS stage wrapper, parallax backgrounds, earthquake fx
@@ -47,7 +57,7 @@ js/
     sound.js  dashboard.js  indicator.js  levels-editor.js
     core/                framework-ish helpers: EventEmitter, mediator, math,
                          storage (localStorage / chrome.storage), browser + app
-                         detection, DOM builder, tab, fast-click
+                         detection, DOM builder, tab
     entity/              a single game object (ball, paddle, bullet, bonus, block,
                          particle, tail, explosion, score, cloud)
     entities/            the collection managing many of one entity type
@@ -128,12 +138,27 @@ via `core.storageGlobal` under `level` and the game picks it up as a custom leve
 
 1. Create `js/app/episodes/<name>/` with `blocks.js`, `bonuses.js`, `levels.js`,
    `manifest.js`, `resources.js`, `splash-screen.js` (copy `space/` as a template).
-2. Register it in `js/app/episodes/_.js` and in `EPISODES` in `js/_config_dev.js`
-   and `js/_config_prod.js`.
-3. Add `css/episodes/<name>.css` — `preloader.js` loads it by convention.
-4. Add assets under `images/episodes/<name>/` and `sounds/episodes/<name>/`.
+2. Add the six modules to `js/app/episodes/_registry.js`.
+3. Add the name to `EPISODES` in `js/_config_dev.js` and `js/_config_prod.js`.
+4. Add `css/episodes/<name>.css` — `preloader.js` loads it by convention.
+5. Add assets under `images/episodes/<name>/` and `sounds/episodes/<name>/`.
 
-No build list to update: `npm run build` globs `js/app/**`.
+### Registries instead of computed module paths
+
+Three lookups used to build a module path at runtime — the episode's content, the
+interactive block entities, and the language tables. No bundler can follow that,
+so each is now an explicit map: `episodes/_registry.js`,
+`entity/block/_registry.js`, and `LANGUAGES` in `i18/i18.js`. Adding an episode,
+a block entity or a language means adding an entry. The upside is that a typo is
+a missing key at build time rather than a 404 at runtime.
+
+### window.BallAndWall
+
+`js/index.js` publishes the live singletons on `window.BallAndWall` — the stage,
+entities, levels, dashboard, options and input. RequireJS used to let anything be
+pulled out of the loader with `require('app/levels')`; a bundle has no registry,
+so the handle is deliberate. The end-to-end tests read game state through it, and
+it is handy from the console.
 
 ## Constraints worth knowing
 
@@ -170,19 +195,21 @@ Node's built-in runner over the collision geometry (`core/math.js`) and the ball
 bounce and speed logic (`entity/ball.js`). No browser, so it gates every push
 cheaply.
 
-`tests/unit/amd-harness.mjs` loads the **real** module sources into Node: the
-modules take every collaborator through their `define()` list, so registering a
-stub under a module id is enough to isolate them. Nothing is re-implemented. A
-dependency with no stub raises an error naming it, rather than arriving as
-`undefined` and failing confusingly later.
+The **real** module sources run; nothing is re-implemented. Collaborators that
+touch the DOM, localStorage or CreateJS at *module scope* are swapped for stubs by
+`tests/unit/loader.mjs`, a Node module-resolution hook. ES modules resolve their
+own imports, so substituting at resolution time is the ESM equivalent of the
+dependency injection AMD gave for free. `tests/unit/setup.mjs` installs the `$` and
+`createjs` globals before anything loads, and is wired in via `--import`.
 
 Two details worth knowing before adding cases:
 
 - `entity/ball.js` exports a ready-made singleton; the constructor is reached via
   `.constructor` so each test gets an independent ball. `init()` is skipped (it
   needs a canvas and a preloaded sprite sheet) and `bitmap` is assigned directly.
-- Run them with the glob — `node --test "tests/unit/*.test.mjs"`. Passing the
-  directory makes Node treat it as a single file and fail with MODULE_NOT_FOUND.
+- Run them through `npm run test:unit`. By hand they need both the setup import
+  and the glob; passing the bare directory makes Node treat it as one file and
+  fail with MODULE_NOT_FOUND.
 
 Every assertion here was mutation-checked: flipping the paddle's steering sign,
 dropping the speed cap, bouncing the wrong axis off a block, letting a glued

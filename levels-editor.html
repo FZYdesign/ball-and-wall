@@ -27,17 +27,6 @@
     <link rel="stylesheet" href="dist/levels-editor.css">
     <link rel="stylesheet" href="vendor/fancyselect/fancySelect.css" type="text/css" media="screen" />
     <script src="js/_config_prod.js"></script>
-    <script src="js/lib/require/require.js"></script>
-    <script>
-        require.config({
-            baseUrl: SS + 'js',
-            paths: {
-                fancyselect: '../vendor/fancyselect/fancySelect',
-                q: '../vendor/q/q',
-                md5: '../vendor/js-md5/md5.min'
-            }
-        });
-    </script>
 </head>
 <body oncontextmenu="return false;" class="class-index-page">
     <div id="indicator-container">
@@ -106,7 +95,8 @@
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="js/lib/createjs/createjs.min.js"></script>
     <script src="js/lib/createjs/soundjs-0.5.2.min.js"></script>
-    <script src="dist/output.min.js"></script>
-    <script src="js/levels-editor.js"></script>
+    <script src="vendor/js-md5/md5.min.js"></script>
+    <script src="vendor/fancyselect/fancySelect.js"></script>
+    <script src="dist/levels-editor.js"></script>
 </body>
 </html>

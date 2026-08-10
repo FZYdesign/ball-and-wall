@@ -93,17 +93,17 @@ export async function waitForBoot(page) {
 }
 
 /**
- * Reads live game state out of the page through RequireJS. Modules are already
- * loaded by this point, so the synchronous `require(id)` form resolves.
+ * Reads live game state out of the page through window.BallAndWall, the handle
+ * js/index.js publishes for exactly this purpose.
  *
  * @param {import('@playwright/test').Page} page
  * @return {Promise<Object>}
  */
 export function readState(page) {
     return page.evaluate(() => {
-        const levels = require('app/levels');
-        const entities = require('app/entities/_');
-        const dashboard = require('app/dashboard');
+        const levels = window.BallAndWall.levels;
+        const entities = window.BallAndWall.entities;
+        const dashboard = window.BallAndWall.dashboard;
 
         return {
             episode: document.body.id,
@@ -168,7 +168,7 @@ export async function touchDrag(page, fractions) {
             touchPoints: [{ x, y }]
         });
         await page.waitForTimeout(250);
-        readings.push(await page.evaluate(() => require('app/input/_').pointer.x));
+        readings.push(await page.evaluate(() => window.BallAndWall.input.pointer.x));
     }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 
@@ -187,7 +187,7 @@ export async function startRound(page, level = 0) {
     await page.click(`.lbx-rounds .option-item-entry[data-id="${level}"]`);
     await page.click('.lbx-rounds .btn.secondary a');
     await page.waitForFunction(
-        () => require('app/entities/_').balls.getLength() > 0,
+        () => window.BallAndWall.entities.balls.getLength() > 0,
         null,
         { timeout: 20_000 }
     );
