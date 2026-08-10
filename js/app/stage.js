@@ -80,7 +80,10 @@ Stage.prototype.initEvents = function() {
  * @return {Stage}
  */
 Stage.prototype.showDashboard = function(visible) {
-    this.dashboardVisible = Boolean(visible);
+    var next = Boolean(visible),
+        changed = this.dashboardVisible !== next;
+
+    this.dashboardVisible = next;
 
     if ( this.scale === 1 ) {
         // Full size keeps the original composition, where it is always shown.
@@ -89,14 +92,20 @@ Stage.prototype.showDashboard = function(visible) {
         return this;
     }
     this.dashboard.css({
-        transform: this.dashboardVisible ? 'translateX(' + DASHBOARD_WIDTH + 'px)' : '',
+        transform: next ? 'translateX(' + DASHBOARD_WIDTH + 'px)' : '',
         // Parked it is still in the DOM just outside the clip, so stop it
         // swallowing taps meant for the field behind it.
-        pointerEvents: this.dashboardVisible ? 'auto' : 'none'
+        pointerEvents: next ? 'auto' : 'none'
     });
     this.toggle
-            .toggleClass('a-hud-toggle-open', this.dashboardVisible)
-            .attr('aria-expanded', this.dashboardVisible ? 'true' : 'false');
+            .toggleClass('a-hud-toggle-open', next)
+            .attr('aria-expanded', next ? 'true' : 'false');
+
+    if ( changed ) {
+        // The panel covers the field, so a round cannot carry on behind it.
+        // app/game.js owns what pausing means and listens for this.
+        core.mediator.emit('hud:visibility', next);
+    }
 
     return this;
 };

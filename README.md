@@ -79,7 +79,8 @@ installed Google Chrome; if you do not have it, `npx playwright install chrome`.
 The play field scales to fit the viewport while keeping its 798x462 aspect ratio,
 so phones and tablets get the whole field rather than a slice of it. On a phone
 the dashboard is hidden so the field gets the full screen, and slides in from the
-button in the top-left corner when you want the score and time. Input runs on
+button in the top-left corner when you want the score and time — which pauses the
+round, clock included, until you close it again. Input runs on
 Pointer Events, so mouse, touch and pen all take the same path. The field is
 landscape, so portrait phones are prompted to rotate.
 

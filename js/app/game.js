@@ -85,6 +85,7 @@ Game.prototype.initEvents = function() {
     this.windowRoundWin.addListener('nextRound', $.proxy(this.onWindowRoundWinNextRound, this));
     this.windowRoundWin.addListener('retryRound', $.proxy(this.onWindowRoundWinRetryRound, this));
     core.mediator.addListener('game:game-over', $.proxy(this.onGameOver, this));
+    core.mediator.addListener('hud:visibility', $.proxy(this.onDashboardVisibility, this));
     core.mediator.addListener('game:stage-clear', $.proxy(this.onGameClearStage, this));
     dashboard.addListener('clickHelp', $.proxy(this.onBtnHelpClick, this));
     dashboard.addListener('clickOptions', $.proxy(this.onBtnOptionsClick, this));
@@ -119,6 +120,7 @@ Game.prototype.update = function(event) {
  * @param {Number} level
  */
 Game.prototype.startNewGame = function(episode, level) {
+    this.resumeForNewRound();
     sound.resetSettings();
     $('#a-game-canvas').addClass('a-playing');
     this.clearStage();
@@ -149,6 +151,7 @@ Game.prototype.startNewGame = function(episode, level) {
  * @param {Number} level
  */
 Game.prototype.startLevelGame = function(level) {
+    this.resumeForNewRound();
     this.clearStage();
     levels.loadLevel(level).build();
     entities.balls.create();
@@ -479,10 +482,57 @@ Game.prototype.onPreloaderComplete = function() {
  * @method onWindowFocus
  */
 Game.prototype.onWindowFocus = function() {
-    createjs.Ticker.setPaused(false);
+    if ( !this.isPausedByDashboard() ) {
+        createjs.Ticker.setPaused(false);
+    }
 
     if ( !this.isGameStarted ) {
         sound.playMusic();
+    }
+};
+
+/**
+ * Closes the dashboard panel and makes sure the ticker is running, so a round
+ * never starts behind it or frozen.
+ *
+ * @method resumeForNewRound
+ */
+Game.prototype.resumeForNewRound = function() {
+    stage.showDashboard(false);
+    createjs.Ticker.setPaused(false);
+};
+
+/**
+ * Whether the round is being held for the dashboard panel, which covers the
+ * field on a small screen. Returning to the tab must not resume behind it.
+ *
+ * @method isPausedByDashboard
+ * @return {Boolean}
+ */
+Game.prototype.isPausedByDashboard = function() {
+    return this.isGameStarted && stage.dashboardVisible;
+};
+
+/**
+ * The dashboard slid in or out. On a small screen it covers the field, so a
+ * round in progress is held while it is open and the clock stops with it --
+ * the timer is a plain interval, so pausing the ticker alone would leave it
+ * running and inflate the player's time.
+ *
+ * @method onDashboardVisibility
+ * @param {Boolean} visible
+ */
+Game.prototype.onDashboardVisibility = function(visible) {
+    if ( !this.isGameStarted ) {
+        return;
+    }
+    createjs.Ticker.setPaused(Boolean(visible));
+
+    if ( visible ) {
+        dashboard.getTime().stop();
+    } else {
+        // start() without an argument resumes; it does not reset the clock.
+        dashboard.getTime().start();
     }
 };
 
@@ -502,7 +552,9 @@ Game.prototype.onWindowVisibilityChange = function() {
         createjs.Ticker.setPaused(true);
         sound.stopMusic(true);
     } else {
-        createjs.Ticker.setPaused(false);
+        if ( !this.isPausedByDashboard() ) {
+            createjs.Ticker.setPaused(false);
+        }
 
         if ( !this.isGameStarted ) {
             sound.playMusic();

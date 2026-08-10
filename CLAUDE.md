@@ -124,6 +124,20 @@ toggle is only displayed under that class.
 A viewport large enough to render at 1:1 keeps the original composition, where
 the dashboard is always on screen and the toggle is hidden.
 
+Because the panel covers the field, a round cannot continue behind it.
+`showDashboard()` emits `hud:visibility` on the mediator and `game.js` decides
+what that means: it pauses the ticker **and** stops the clock. Those are two
+separate things — the timer in `dashboard/time.js` is a plain `setInterval`, so
+pausing the ticker alone would leave it counting and quietly inflate the
+player's time. `start()` with no argument resumes rather than resetting.
+
+Two consequences worth keeping in mind when touching this:
+
+- Starting a round goes through `resumeForNewRound()`, which closes the panel
+  and force-unpauses. A round must never begin behind the panel or frozen.
+- Returning to the tab must not resume a round that is being held for the panel,
+  so the focus and visibility handlers check `isPausedByDashboard()` first.
+
 Input is Pointer Events only — one path for mouse, touch and pen. There is no
 touch/mouse fork and no UA sniffing in the input layer.
 

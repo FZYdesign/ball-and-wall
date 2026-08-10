@@ -124,6 +124,84 @@ for (const label of PHONES) {
             expect((await measure()).covered, 'closing it should park it again').toBe(0);
         });
 
+        test('closes the dashboard when a round starts', async ({ page }) => {
+            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
+
+            await prepare(page);
+            await page.goto('/index_dev.html');
+            await waitForBoot(page);
+            await page.waitForTimeout(500);
+
+            const scale = await page.evaluate(() => window.BallAndWall.stage.scale);
+
+            test.skip(scale === 1, 'renders at 1:1, so the dashboard is always shown');
+
+            await page.locator('#a-hud-toggle').click();
+            await page.waitForTimeout(400);
+            expect(await page.evaluate(() => window.BallAndWall.stage.dashboardVisible)).toBe(true);
+
+            await startRound(page, 0);
+            await page.waitForTimeout(500);
+
+            // Nobody wants to start a round looking at the panel.
+            expect(await page.evaluate(() => window.BallAndWall.stage.dashboardVisible)).toBe(false);
+            expect(await page.evaluate(() => window.createjs.Ticker.getPaused())).toBe(false);
+        });
+
+        test('holds the round while the dashboard is open', async ({ page }) => {
+            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
+
+            await prepare(page);
+            await page.goto('/index_dev.html');
+            await waitForBoot(page);
+            await page.waitForTimeout(500);
+
+            const scale = await page.evaluate(() => window.BallAndWall.stage.scale);
+
+            test.skip(scale === 1, 'renders at 1:1, so the dashboard is always shown');
+
+            await startRound(page, 0);
+            await page.evaluate(() => document.getElementById('a-game-canvas').click());
+            await page.waitForTimeout(1200);
+
+            const sample = () => page.evaluate(() => {
+                const ball = window.BallAndWall.entities.balls.reset().current();
+
+                return {
+                    x: ball ? Math.round(ball.getX()) : null,
+                    y: ball ? Math.round(ball.getY()) : null,
+                    time: window.BallAndWall.dashboard.getTime().get(),
+                    paused: window.createjs.Ticker.getPaused()
+                };
+            });
+
+            await page.locator('#a-hud-toggle').click();
+            await page.waitForTimeout(400);
+
+            const opened = await sample();
+
+            expect(opened.paused).toBe(true);
+
+            await page.waitForTimeout(2500);
+
+            const held = await sample();
+
+            expect(held.x, 'the ball must not move behind the panel').toBe(opened.x);
+            expect(held.y).toBe(opened.y);
+            // The clock is a plain interval, so it needs stopping separately --
+            // otherwise a pause quietly inflates the player's time.
+            expect(held.time, 'the clock must stop too').toBe(opened.time);
+
+            await page.locator('#a-hud-toggle').click();
+            await page.waitForTimeout(2000);
+
+            const resumed = await sample();
+
+            expect(resumed.paused).toBe(false);
+            expect(resumed.x !== held.x || resumed.y !== held.y, 'the ball must move again').toBe(true);
+            expect(resumed.time, 'and the clock must carry on').toBeGreaterThan(held.time);
+        });
+
         test('keeps the authored aspect ratio', async ({ page }) => {
             await prepare(page);
             await page.goto('/index_dev.html');
