@@ -29,11 +29,6 @@ const assets = [
         dest: 'jquery/jquery.min.js'
     },
     {
-        pkg: 'q',
-        candidates: ['q.js'],
-        dest: 'q/q.js'
-    },
-    {
         pkg: 'js-md5',
         candidates: ['build/md5.min.js', 'src/md5.js'],
         dest: 'js-md5/md5.min.js'

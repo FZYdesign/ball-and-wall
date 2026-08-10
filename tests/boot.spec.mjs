@@ -58,7 +58,7 @@ test.describe('boot (development sources)', () => {
         await expect(page.locator('#cookie')).toHaveCount(0);
         await expect(page.locator('.lbx-first-time')).toHaveCount(0);
 
-        const options = await page.evaluate(() => require('app/game-options').get('window-options'));
+        const options = await page.evaluate(() => window.BallAndWall.gameOptions.get('window-options'));
 
         expect(options.cookieInfo).toBe(true);
         expect(options.music).toBe('off');

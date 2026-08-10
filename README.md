@@ -30,8 +30,8 @@ npm run dev
 
 Then open http://localhost:8080/index_dev.html (or
 http://localhost:8080/levels-editor_dev.html for the level editor). The `_dev.html`
-pages load the uncompressed sources module by module, so a reload is enough to pick
-up an edit — there is no watch or rebuild step.
+pages load the ES modules natively from disk, so a reload is enough to pick up an
+edit — there is no bundler, watcher or rebuild step in development.
 
 Serving over HTTP matters: opening the files directly with `file://` breaks module
 loading and canvas image access.

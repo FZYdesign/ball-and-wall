@@ -1,19 +1,14 @@
 /**
- * Production build. Replaces the original Grunt pipeline
- * (concat + uglify + cssmin + processhtml + clean) with esbuild.
+ * Production build. Bundles the ES modules with esbuild and rewrites the
+ * development pages into their production counterparts.
  *
- *   js/app/**  -> dist/output.min.js  (+ .map)
- *   css/*      -> dist/*.css
- *   *_dev.html -> *.html              (build blocks resolved)
- *
- * Every module under js/app declares a *named* AMD module -- `define('app/x', ...)` --
- * so RequireJS resolves them out of the single concatenated bundle and the
- * concatenation order does not affect correctness. That is why the source list is
- * globbed rather than hand-maintained: the old Grunt list had drifted from the
- * files on disk and silently referenced a file that no longer existed.
+ *   js/index.js         -> dist/index.js         (+ .map)
+ *   js/levels-editor.js -> dist/levels-editor.js (+ .map)
+ *   css/*               -> dist/*.css
+ *   *_dev.html          -> *.html                (build blocks resolved)
  */
 import { build } from 'esbuild';
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,29 +45,16 @@ const cssBundles = {
     'levels-editor.css': ['css/levels-editor.css']
 };
 
+/** Page entry points; each becomes a self-contained bundle. */
+const jsEntries = {
+    'js/index.js': 'index.js',
+    'js/levels-editor.js': 'levels-editor.js'
+};
+
 const htmlPages = {
     'index_dev.html': 'index.html',
     'levels-editor_dev.html': 'levels-editor.html'
 };
-
-/**
- * @param {string} dir
- * @param {string} [ext]
- * @return {string[]} absolute paths, sorted for reproducible output
- */
-function walk(dir, ext = '.js') {
-    return readdirSync(dir, { withFileTypes: true })
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .flatMap((entry) => {
-                const full = join(dir, entry.name);
-
-                if (entry.isDirectory()) {
-                    return walk(full, ext);
-                }
-
-                return entry.name.endsWith(ext) ? [full] : [];
-            });
-}
 
 /**
  * Resolves `<!-- build:js|css target --> ... <!-- /build -->` blocks into a
@@ -127,48 +109,6 @@ function inlineImports(css, baseDir) {
     );
 }
 
-/** Module ids resolved through require.config paths rather than the bundle. */
-const externalModules = new Set(['q', 'md5', 'fancyselect', 'require', 'exports', 'module']);
-
-/**
- * Fails the build if a `define()` dependency has no matching `define('id', ...)`
- * anywhere in the bundle.
- *
- * RequireJS resolves a missing id by fetching `js/<id>.js` over the network,
- * which in a production build means a silent 404 and a game that stops loading
- * with no error at the point of the mistake. Checking it here turns a typo in a
- * new module id into an immediate build failure.
- *
- * Dependencies assembled at runtime (`'app/episodes/' + name + '/blocks'` in
- * app/episodes/episode.js) cannot be checked statically and are not covered.
- *
- * @param {string} source concatenated bundle source
- */
-function assertModulesResolve(source) {
-    const defined = new Set(
-        [...source.matchAll(/define\(\s*'([^']+)'/g)].map((match) => match[1])
-    );
-    const required = new Set();
-
-    for (const call of source.matchAll(/define\(\s*'[^']+'\s*,\s*\[([^\]]*)\]/g)) {
-        for (const dep of call[1].matchAll(/'([^']+)'/g)) {
-            required.add(dep[1]);
-        }
-    }
-    const missing = [...required]
-            .filter((id) => !defined.has(id) && !externalModules.has(id))
-            .sort();
-
-    if (missing.length) {
-        throw new Error(
-            `Unresolved AMD module id(s): ${missing.join(', ')}.\n` +
-            'Either the module is not defined under js/app, or the id is misspelled.'
-        );
-    }
-
-    return { defined: defined.size, required: required.size };
-}
-
 /**
  * @param {string} path absolute
  * @return {string} e.g. "42.1 kB"
@@ -181,36 +121,27 @@ rmSync(distDir, { recursive: true, force: true });
 mkdirSync(distDir, { recursive: true });
 
 // --- JavaScript -------------------------------------------------------------
-const sources = walk(join(root, 'js', 'app'));
+// esbuild follows the import graph itself, so an unresolved specifier is a build
+// error rather than something to hand-check. Each page gets its own bundle
+// containing exactly what it reaches.
+for (const [entry, outname] of Object.entries(jsEntries)) {
+    const outfile = join(distDir, outname);
 
-if (!sources.length) {
-    throw new Error('No sources found under js/app -- refusing to emit an empty bundle.');
+    await build({
+        entryPoints: [join(root, entry)],
+        outfile,
+        bundle: true,
+        format: 'iife',
+        banner: { js: banner },
+        minify: true,
+        sourcemap: true,
+        target: ['es2017'],
+        legalComments: 'none',
+        logLevel: 'warning'
+    });
+
+    console.log(`js:   ${entry} -> dist/${outname} (${size(outfile)})`);
 }
-
-const jsOut = join(distDir, 'output.min.js');
-const jsSource = sources.map((file) => readFileSync(file, 'utf8')).join('\n');
-const modules = assertModulesResolve(jsSource);
-
-await build({
-    stdin: {
-        contents: jsSource,
-        loader: 'js',
-        sourcefile: 'js/app/*.js',
-        resolveDir: root
-    },
-    outfile: jsOut,
-    banner: { js: banner },
-    minify: true,
-    sourcemap: true,
-    target: ['es2017'],
-    legalComments: 'none',
-    logLevel: 'warning'
-});
-
-console.log(
-    `js:   ${sources.length} files, ${modules.defined} AMD modules, ` +
-    `${modules.required} deps resolved -> dist/output.min.js (${size(jsOut)})`
-);
 
 // --- CSS --------------------------------------------------------------------
 for (const [name, inputs] of Object.entries(cssBundles)) {

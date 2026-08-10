@@ -1,23 +1,21 @@
 /**
  * entity/ball.js decides what a hit does: which way the ball leaves a paddle,
  * blocks and other balls, and how its speed builds up. That is the logic a
- * player feels, and none of it needs a canvas -- the module takes every
- * collaborator through its define() list, so the real source runs here against
- * stubs.
+ * player feels, and none of it needs a canvas.
  *
- * The real entity/_base.js is used rather than a fake, because the collision
- * code leans on its width/half-width accessors and their caching.
+ * The real source runs here. Collaborators that touch the DOM at module scope
+ * are swapped for stubs by tests/unit/loader.mjs, but entity/_base.js is the
+ * real thing -- the collision code leans on its width and half-width accessors
+ * and their caching.
  */
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createLoader } from './amd-harness.mjs';
+import ballInstance from '../../js/app/entity/ball.js';
+import { speedReadings } from './stubs/dashboard.mjs';
 
-const PIXEL_RATIO = 1;
+/** The module exports a ready-made singleton; tests need the constructor. */
+const Ball = ballInstance.constructor;
 const BALL_SIZE = 10;
-
-let Ball;
-let createjs;
-let speedReadings;
 
 /**
  * Builds a Ball with the real prototype but without init(), which would need a
@@ -28,7 +26,7 @@ let speedReadings;
  */
 function makeBall({ x = 0, y = 0, speedX = 0, speedY = 0, speedStep = 2 } = {}) {
     const ball = new Ball();
-    const bitmap = new createjs.Bitmap({ width: BALL_SIZE, height: BALL_SIZE });
+    const bitmap = new globalThis.createjs.Bitmap({ width: BALL_SIZE, height: BALL_SIZE });
 
     bitmap.x = x;
     bitmap.y = y;
@@ -74,34 +72,9 @@ function makeBlock({
 }
 
 beforeEach(() => {
-    speedReadings = [];
-
-    const loader = createLoader({
-        'app/entity/tail': { createNew: () => null },
-        'app/entity/explosion': { createNew: () => null },
-        'app/sound': { play() {}, stop() {} },
-        'app/game-options': { get: (key) => (key === 'fps_ratio' ? 1 : 60) },
-        'app/stage': { add() {}, remove() {} },
-        'app/preloader': { get: () => ({ width: BALL_SIZE, height: BALL_SIZE, src: '' }) },
-        'app/input/_': { keyboard: { isPressed: () => false }, pointer: { x: 0, y: 0 } },
-        'app/episodes/_': { getManifest: () => ({ ball: { tail: false, explosion: false } }) },
-        'app/dashboard': {
-            getSpeed: () => ({ set: (value) => speedReadings.push(value) })
-        }
-    });
-
-    const EventEmitter = loader.load('js/app/core/event-emitter.js');
-
-    loader.registry['app/core/_'] = {
-        EventEmitter,
-        helperApp: { pixelRatio: () => PIXEL_RATIO }
-    };
-    loader.load('js/app/entity/_base.js');
-
-    createjs = loader.createjs;
-    // The module exports a ready-made singleton; the constructor behind it is
-    // what these tests need so each case gets an independent ball.
-    Ball = loader.load('js/app/entity/ball.js').constructor;
+    // The stub modules are shared across the file, so the recorded HUD readings
+    // are cleared between cases.
+    speedReadings.length = 0;
 });
 
 describe('isCollision', () => {

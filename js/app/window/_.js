@@ -1,35 +1,29 @@
+import Base from './_base.js';
+import Alert from './alert.js';
+import Auth from './auth.js';
+import Confirm from './confirm.js';
+import EpisodeWin from './episode-win.js';
+import FirstTime from './first-time.js';
+import Games from './games.js';
+import Help from './help.js';
+import Options from './options.js';
+import OrientationIndicator from './orientation-indicator.js';
+import PreloaderIndicator from './preloader-indicator.js';
+import Rounds from './rounds.js';
+import RoundWin from './round-win.js';
 
-define('app/window/_', [
-    'app/window/_base',
-    'app/window/alert',
-    'app/window/auth',
-    'app/window/confirm',
-    'app/window/episode-win',
-    'app/window/first-time',
-    'app/window/games',
-    'app/window/help',
-    'app/window/options',
-    'app/window/orientation-indicator',
-    'app/window/preloader-indicator',
-    'app/window/rounds',
-    'app/window/round-win'
-], 
-function(Base, Alert, Auth, Confirm, EpisodeWin, FirstTime, Games, Help, Options,
-         OrientationIndicator, PreloaderIndicator, Rounds, RoundWin) {
-
-    return {
-        Base: Base,
-        Alert: Alert,
-        Auth: Auth,
-        Confirm: Confirm,
-        EpisodeWin: EpisodeWin,
-        FirstTime: FirstTime,
-        Games: Games,
-        Help: Help,
-        Options: Options,
-        OrientationIndicator: OrientationIndicator,
-        PreloaderIndicator: PreloaderIndicator,
-        Rounds: Rounds,
-        RoundWin: RoundWin
-    };
-});
+export default {
+    Base: Base,
+    Alert: Alert,
+    Auth: Auth,
+    Confirm: Confirm,
+    EpisodeWin: EpisodeWin,
+    FirstTime: FirstTime,
+    Games: Games,
+    Help: Help,
+    Options: Options,
+    OrientationIndicator: OrientationIndicator,
+    PreloaderIndicator: PreloaderIndicator,
+    Rounds: Rounds,
+    RoundWin: RoundWin
+};

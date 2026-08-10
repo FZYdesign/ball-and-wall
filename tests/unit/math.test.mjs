@@ -5,9 +5,8 @@
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { createLoader, makeEntity } from './amd-harness.mjs';
-
-const math = createLoader().load('js/app/core/math.js');
+import { makeEntity } from './entity-double.mjs';
+import math from '../../js/app/core/math.js';
 
 describe('move', () => {
     test('advances by velocity times delta and reports the step taken', () => {

@@ -1,12 +1,7 @@
+import keyboard from './keyboard.js';
+import pointer from './pointer.js';
 
-define('app/input/_', [
-    'app/input/keyboard',
-    'app/input/pointer'
-], 
-function(keyboard, pointer) {
-
-    return {
-        keyboard: keyboard,
-        pointer: pointer
-    };
-});
+export default {
+    keyboard: keyboard,
+    pointer: pointer
+};

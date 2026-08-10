@@ -96,7 +96,7 @@ for (const label of PHONES) {
             await waitForBoot(page);
             await page.waitForTimeout(500);
 
-            const stageWidth = await page.evaluate(() => require('app/stage').getWidth());
+            const stageWidth = await page.evaluate(() => window.BallAndWall.stage.getWidth());
             const readings = await touchDrag(page, [0.1, 0.5, 0.9]);
 
             // pointer.x is reported in stage pixels, so each contact must land at
@@ -124,7 +124,7 @@ for (const label of PHONES) {
             await page.locator('.lbx-rounds .option-item-entry[data-id="0"]').tap();
             await page.locator('.lbx-rounds .btn.secondary a').tap();
             await page.waitForFunction(
-                () => require('app/entities/_').balls.getLength() > 0,
+                () => window.BallAndWall.entities.balls.getLength() > 0,
                 null,
                 { timeout: 20_000 }
             );
@@ -134,7 +134,7 @@ for (const label of PHONES) {
             expect(state.blocks).toBeGreaterThan(0);
 
             const paddleAt = () => page.evaluate(() => {
-                const paddle = require('app/entities/_').paddles.reset().current();
+                const paddle = window.BallAndWall.entities.paddles.reset().current();
 
                 return paddle ? paddle.getX() : null;
             });

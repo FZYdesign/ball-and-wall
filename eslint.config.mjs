@@ -18,14 +18,17 @@ const configGlobals = {
     VERSION: 'readonly'
 };
 
-/** Globals provided by the vendored libraries loaded via <script>. */
+/**
+ * Globals from the vendored libraries, which load via <script> rather than as
+ * modules. jQuery is a global in ~100 files; importing it properly is a separate
+ * mechanical change.
+ */
 const vendorGlobals = {
     $: 'readonly',
     chrome: 'readonly',
     createjs: 'readonly',
-    define: 'readonly',
     jQuery: 'readonly',
-    require: 'readonly'
+    md5: 'readonly'
 };
 
 export default [
@@ -43,9 +46,10 @@ export default [
     js.configs.recommended,
     {
         files: ['js/**/*.js'],
+        ignores: ['js/_config_dev.js', 'js/_config_prod.js'],
         languageOptions: {
-            ecmaVersion: 2017,
-            sourceType: 'script',
+            ecmaVersion: 2020,
+            sourceType: 'module',
             globals: {
                 ...globals.browser,
                 ...configGlobals,
@@ -79,13 +83,19 @@ export default [
         }
     },
     {
-        // These files *declare* the configuration globals, so they must not also
-        // receive them as predefined globals.
+        // These *declare* the configuration globals, and are the last classic
+        // scripts left -- they run before the module bundle to set them up.
         files: ['js/_config_dev.js', 'js/_config_prod.js'],
         languageOptions: {
+            ecmaVersion: 2020,
+            sourceType: 'script',
             globals: Object.fromEntries(
                 Object.keys(configGlobals).map((name) => [name, 'off'])
             )
+        },
+        rules: {
+            // Declaring the globals *is* the point of these two files.
+            'no-unused-vars': 'off'
         }
     },
     {

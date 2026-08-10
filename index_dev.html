@@ -43,17 +43,6 @@
     <!-- build:js js/_config_prod.js -->
     <script src="js/_config_dev.js"></script>
     <!-- /build -->
-    <script src="js/lib/require/require.js"></script>
-    <script>
-        require.config({
-            baseUrl: SS + 'js',
-            paths: {
-                fancyselect: '../vendor/fancyselect/fancySelect',
-                q: '../vendor/q/q',
-                md5: '../vendor/js-md5/md5.min'
-            }
-        });
-    </script>
 </head>
 <body oncontextmenu="return false;" class="class-index-page">
     <!--
@@ -87,8 +76,9 @@
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="js/lib/createjs/createjs.min.js"></script>
     <script src="js/lib/createjs/soundjs-0.5.2.min.js"></script>
-    <!-- build:js dist/output.min.js -->
+    <script src="vendor/js-md5/md5.min.js"></script>
+    <!-- build:js dist/index.js -->
+    <script type="module" src="js/index.js"></script>
     <!-- /build -->
-    <script src="js/index.js"></script>
 </body>
 </html>

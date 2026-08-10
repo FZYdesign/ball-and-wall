@@ -16,7 +16,7 @@ test.describe('gameplay', () => {
         await expect(rounds).toBeVisible();
 
         const entries = rounds.locator('.option-item-entry');
-        const levelCount = await page.evaluate(() => require('app/levels').getLevelNames().length);
+        const levelCount = await page.evaluate(() => window.BallAndWall.levels.getLevelNames().length);
 
         await expect(entries).toHaveCount(levelCount);
         expect(levelCount).toBeGreaterThan(0);
@@ -38,7 +38,7 @@ test.describe('gameplay', () => {
 
         await page.click('.lbx-rounds .btn.secondary a');
         await page.waitForFunction(
-            () => require('app/entities/_').balls.getLength() > 0,
+            () => window.BallAndWall.entities.balls.getLength() > 0,
             null,
             { timeout: 20_000 }
         );
@@ -65,7 +65,7 @@ test.describe('gameplay', () => {
 
         // The ball is glued to the paddle until the player clicks the stage.
         const positions = await page.evaluate(async () => {
-            const balls = require('app/entities/_').balls;
+            const balls = window.BallAndWall.entities.balls;
             const ball = balls.reset().current();
             const start = { x: ball.getX(), y: ball.getY() };
 
@@ -89,7 +89,7 @@ test.describe('gameplay', () => {
         await startRound(page, 0);
 
         const bounds = await page.evaluate(async () => {
-            const balls = require('app/entities/_').balls;
+            const balls = window.BallAndWall.entities.balls;
             const ball = balls.reset().current();
             const canvas = document.getElementById('a-game-canvas');
 
