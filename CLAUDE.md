@@ -174,9 +174,15 @@ it is handy from the console.
 - **Named `define()` ids are mandatory.** An anonymous `define([...], fn)` will not
   resolve out of the concatenated production bundle. The build fails on any
   dependency id it cannot find, so a typo shows up at build time.
-- **Retina:** `core.helperApp.pixelRatio()` scales the canvas and most geometry
-  constants. At pixel ratio ≥ 2, `game.js` restricts `EPISODES` to `space` — the
-  pegasus art has no @2x variant.
+- **`pixelRatio()` is capped at 2, and that cap is load-bearing.** It scales the
+  canvas backing store, sprite frame sizes, block dimensions and speeds. Artwork
+  ships at 1x and @2x only, so an uncapped ratio on a 3x phone made the frame
+  maths describe a sheet that does not exist — `38 * 3 = 114`px frames read out
+  of a 76px-per-frame @2x image gives zero frames, a null `getBounds()` and a
+  `TypeError` on every tick once a ball sweeps an animated block. Raising the cap
+  means shipping @3x art *and* teaching `episode.getResources()` to select it.
+- At pixel ratio ≥ 2, `game.js` restricts `EPISODES` to `space` — the pegasus art
+  has no @2x variant.
 - **Episode art licensing:** `space` assets are free (author-made). `pegasus` images
   were bought from graphicriver and are **not** covered by this repo's MIT licence.
 - **`player.js` talks to a backend that is not in this repo** (`API_ADDR`, empty by
@@ -237,8 +243,13 @@ Two things make the specs deterministic:
 `tests/mobile.spec.mjs` runs the layout and input assertions across emulated
 phones and tablets: the field must stay inside the viewport, keep its aspect
 ratio, and map a touch at 10%/50%/90% of the canvas to the same fractions of the
-stage. The portrait case skips the gameplay test because portrait deliberately
+stage. The portrait case skips the gameplay tests because portrait deliberately
 shows the rotate prompt instead.
+
+One of those cases **releases the ball** and plays for a couple of seconds. That
+matters more than it looks: the collision sweep is what measures every block, and
+leaving the ball glued to the paddle never reaches it. A crash on every tick of a
+3x screen survived a full mobile suite for exactly that reason.
 
 `tests/production.spec.mjs` runs against the *built* `index.html`. This is not
 duplication: production loads one concatenated bundle and one merged stylesheet, so

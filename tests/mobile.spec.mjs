@@ -5,7 +5,7 @@
  * pixels and stage pixels all differ.
  */
 import { test, expect, devices } from '@playwright/test';
-import { prepare, waitForBoot, readState, touchDrag, paintedRatio } from './game-page.mjs';
+import { prepare, waitForBoot, readState, startRound, touchDrag, paintedRatio } from './game-page.mjs';
 
 /**
  * Playwright refuses `defaultBrowserType` inside a describe block because it
@@ -146,6 +146,46 @@ for (const label of PHONES) {
             const right = await paddleAt();
 
             expect(right).toBeGreaterThan(left);
+        });
+
+        test('plays a released ball without runtime errors', async ({ page }) => {
+            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
+
+            const { consoleErrors } = await prepare(page);
+
+            await page.goto('/index_dev.html');
+            await waitForBoot(page);
+            await startRound(page, 0);
+
+            // Releasing the ball is what starts the collision sweep, and the
+            // sweep is what measures every block. Leaving the ball glued to the
+            // paddle -- as the touch test above does -- never reaches that code,
+            // which is how a crash on every tick of a high-density screen went
+            // unnoticed: the frame maths asked for sprite frames larger than the
+            // @2x sheet, so getBounds() came back null.
+            const played = await page.evaluate(async () => {
+                const entities = window.BallAndWall.entities;
+                const before = window.BallAndWall.levels.getBlocks().getLength();
+                const ball = entities.balls.reset().current();
+                const from = { x: ball.getX(), y: ball.getY() };
+
+                document.getElementById('a-game-canvas').click();
+                await new Promise((resolve) => setTimeout(resolve, 2500));
+
+                return {
+                    alive: ball.alive,
+                    travelled: Math.hypot(ball.getX() - from.x, ball.getY() - from.y),
+                    blocksBefore: before,
+                    blocksAfter: window.BallAndWall.levels.getBlocks().getLength()
+                };
+            });
+
+            expect(played.alive).toBe(true);
+            expect(played.travelled).toBeGreaterThan(20);
+            // The ball starts under the wall, so a few blocks must have gone.
+            expect(played.blocksAfter).toBeLessThan(played.blocksBefore);
+
+            expect(consoleErrors, `console:\n${consoleErrors.slice(0, 5).join('\n')}`).toEqual([]);
         });
     });
 }

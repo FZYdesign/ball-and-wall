@@ -76,6 +76,8 @@ function makeCreatejs() {
 globalThis.$ = makeJQuery();
 globalThis.jQuery = globalThis.$;
 globalThis.createjs = makeCreatejs();
+// core/helper/app.js reads devicePixelRatio off it; tests set the value they need.
+globalThis.window = { devicePixelRatio: 1, location: { href: 'http://localhost/' } };
 
 // Node supplies its own read-only `navigator`; the modules that would read
 // browser-only fields off it are stubbed, so it is left alone.
