@@ -102,9 +102,23 @@ Uniform scaling, rather than the per-breakpoint reflow the 2015 stylesheets do,
 is what keeps the dashboard canvas — absolutely positioned against the 798px
 field — glued to the field at every size. Because the two approaches conflict,
 `#a-game-wrapper.a-scaled` in `css/common.css` neutralises the breakpoint offsets
-for the canvas area (`800-wide.css` adds 89px of top padding, for instance) and
-overlays the dashboard on the field instead of letting it hang off the left,
-where a phone has no room for it.
+for the canvas area (`800-wide.css` adds 89px of top padding, for instance).
+
+**The dashboard sits in a gutter beside the field, not on it.** Its artwork is
+opaque edge to edge across the full 417×214 canvas, so anywhere over the field it
+hides bricks. A landscape phone is proportionally wider than the 798×462 field,
+so the width for that gutter is usually margin that would otherwise go unused —
+a Pixel 7 keeps its full field size. Where the margin is too small to keep the
+dial and the LED timer readable (`MIN_DASHBOARD_SCALE`), the field gives up width
+instead: covering the play area is worse than shrinking it.
+
+The dashboard therefore has its *own* scale. It is a child of the container the
+field scale is applied to, so its transform is expressed relative to that — the
+two multiply to the on-screen size.
+
+Two cases keep the original composition, overlap included: portrait, which has no
+width to spare and is showing the rotate prompt anyway, and any viewport large
+enough to render at 1:1.
 
 Input is Pointer Events only — one path for mouse, touch and pen. There is no
 touch/mouse fork and no UA sniffing in the input layer.

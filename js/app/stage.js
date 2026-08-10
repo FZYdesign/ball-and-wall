@@ -20,12 +20,31 @@ var
      * @property BASE_HEIGHT
      * @static
      */
-    BASE_HEIGHT = 462;
+    BASE_HEIGHT = 462,
+
+    /**
+     * The dashboard canvas. Its artwork is opaque right to the edges, so
+     * wherever it sits over the field it hides part of the game.
+     *
+     * @property DASHBOARD_WIDTH
+     * @static
+     */
+    DASHBOARD_WIDTH = 417,
+
+    /**
+     * Below this the score dial and the LED timer stop being readable, so the
+     * field gives up width rather than shrinking the dashboard any further.
+     *
+     * @property MIN_DASHBOARD_SCALE
+     * @static
+     */
+    MIN_DASHBOARD_SCALE = 0.5;
 
 function Stage() {
     this.element = $('#a-game-canvas');
     this.canvases = $('#a-game-canvases');
     this.wrapper = $('#a-game-wrapper');
+    this.dashboard = $('#a-game-dashboard');
     this.scale = 1;
     this.stage = new createjs.Stage('a-game-canvas');
     this.bgFrontWidthHalfWidth = null;
@@ -74,7 +93,8 @@ Stage.prototype.fit = function() {
         // the wrapper's height.
         top = this.wrapper.length ? this.wrapper[0].getBoundingClientRect().top : 0,
         availableHeight = viewportHeight - (top > 0 && top < viewportHeight ? top : 0),
-        scale;
+        scale,
+        dashboardScale;
 
     scale = Math.min(
         viewportWidth / BASE_WIDTH,
@@ -84,6 +104,30 @@ Stage.prototype.fit = function() {
 
     if ( !isFinite(scale) || scale <= 0 ) {
         scale = 1;
+    }
+    // The gutter only pays for itself in landscape, which is the orientation
+    // the game asks for. A portrait screen has no width to spare -- reserving
+    // any would leave the field smaller than the dashboard -- and the rotate
+    // prompt is covering it regardless, so there the dashboard stays overlaid.
+    if ( viewportWidth >= viewportHeight ) {
+        // How much of the dashboard fits in the width the field leaves over. A
+        // landscape phone is proportionally wider than the 798x462 field, so
+        // there is usually spare width here: it is where the dashboard belongs.
+        dashboardScale = Math.min(scale, (viewportWidth - BASE_WIDTH * scale) / DASHBOARD_WIDTH);
+
+        if ( scale < 1 && dashboardScale < MIN_DASHBOARD_SCALE ) {
+            // Not enough spare width to keep the dashboard legible, so buy the
+            // room from the field. Losing a little play area beats covering it.
+            dashboardScale = Math.min(MIN_DASHBOARD_SCALE, viewportWidth / DASHBOARD_WIDTH);
+            scale = Math.min(
+                (viewportWidth - DASHBOARD_WIDTH * dashboardScale) / BASE_WIDTH,
+                availableHeight / BASE_HEIGHT,
+                1
+            );
+        }
+    }
+    if ( !isFinite(dashboardScale) || dashboardScale <= 0 ) {
+        dashboardScale = 0;
     }
     this.scale = scale;
 
@@ -96,20 +140,37 @@ Stage.prototype.fit = function() {
 
     if ( scale === 1 ) {
         this.wrapper.removeClass('a-scaled').css({width: '', height: ''});
-        this.canvases.css({transform: '', width: '', height: ''});
+        this.canvases.css({transform: '', width: '', height: '', marginLeft: ''});
+        this.dashboard.css({transform: '', left: '', top: ''});
     } else {
+        // The dashboard sits beside the field rather than on it. It is a child
+        // of the scaled container, so its own transform is expressed relative
+        // to that scale -- the two multiply to dashboardScale on screen.
+        var relative = dashboardScale / scale,
+            gutter = Math.floor(DASHBOARD_WIDTH * dashboardScale);
+
         // A transform does not change the layout box, so the wrapper is sized
         // to the painted result and clips the oversized box inside it.
         // Without that the 798px field keeps widening the document and the
         // page scrolls sideways on a phone.
         this.wrapper.addClass('a-scaled').css({
-            width: Math.round(BASE_WIDTH * scale) + 'px',
-            height: Math.round(BASE_HEIGHT * scale) + 'px'
+            // Floored, not rounded: rounding each part separately can add a
+            // pixel and start the page scrolling sideways again.
+            width: Math.floor(gutter + BASE_WIDTH * scale) + 'px',
+            height: Math.floor(BASE_HEIGHT * scale) + 'px'
         });
         this.canvases.css({
             width: BASE_WIDTH + 'px',
             height: BASE_HEIGHT + 'px',
+            marginLeft: gutter + 'px',
             transform: 'scale(' + scale + ')'
+        });
+        this.dashboard.css({
+            top: 0,
+            // With no gutter (portrait) it falls back to overlaying the field's
+            // top-left corner, which is what the rotate prompt sits over.
+            left: -(DASHBOARD_WIDTH * relative) + 'px',
+            transform: relative ? 'scale(' + relative + ')' : ''
         });
     }
     input.pointer.updateStageCoords();

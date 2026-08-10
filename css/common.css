@@ -1081,16 +1081,15 @@ canvas#a-game-dashboard {
      * field out of its own box. */
     padding: 0 !important;
 }
-/* At full size the dashboard hangs off the left of the play field, where there
- * is room for it. A scaled field fills the whole viewport width, so there is no
- * margin left to hang in and it would be clipped away entirely -- overlay it on
- * the field instead, the way a phone game would.
+/* On a scaled layout the dashboard is moved out of the play field and placed
+ * in the gutter beside it -- its artwork is opaque edge to edge, so anywhere on
+ * top of the field it hides bricks. app/stage.js sets left and transform, since
+ * both depend on the computed scales.
  */
 #a-game-wrapper.a-scaled canvas#a-game-dashboard {
     display: block !important;
-    top: 0 !important;
-    left: 0 !important;
     width: auto !important;
+    transform-origin: top left;
 }
 /* Stop the browser claiming touch gestures over the play field: dragging the
  * paddle must not pan or zoom the page. */

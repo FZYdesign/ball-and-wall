@@ -65,6 +65,48 @@ for (const label of PHONES) {
             expect(consoleErrors, `console:\n${consoleErrors.join('\n')}`).toEqual([]);
         });
 
+        test('keeps the dashboard clear of the play field', async ({ page }) => {
+            // Portrait is told to rotate, and has no width to spare for a
+            // gutter, so the dashboard stays overlaid there.
+            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
+
+            await prepare(page);
+            await page.goto('/index_dev.html');
+            await waitForBoot(page);
+            await page.waitForTimeout(500);
+
+            // A viewport big enough to render the field at 1:1 keeps the
+            // original composition, dashboard overlap included. Only the scaled
+            // layout moves it into a gutter.
+            const scale = await page.evaluate(() => window.BallAndWall.stage.scale);
+
+            test.skip(scale === 1, 'renders at 1:1, so the desktop composition applies');
+
+            const boxes = await page.evaluate(() => {
+                const rect = (id) => {
+                    const { left, top, right, bottom } = document.getElementById(id).getBoundingClientRect();
+
+                    return { left, top, right, bottom };
+                };
+
+                return { field: rect('a-game-canvas'), dashboard: rect('a-game-dashboard') };
+            });
+
+            // The dashboard artwork is opaque edge to edge, so any intersection
+            // hides bricks. It used to be overlaid on the field's top-left,
+            // covering roughly the first third of the wall.
+            const overlaps = !(
+                boxes.dashboard.right <= boxes.field.left + 1
+                    || boxes.dashboard.left >= boxes.field.right - 1
+                    || boxes.dashboard.bottom <= boxes.field.top + 1
+                    || boxes.dashboard.top >= boxes.field.bottom - 1
+            );
+
+            expect(overlaps, `dashboard ${JSON.stringify(boxes.dashboard)} over field ${JSON.stringify(boxes.field)}`)
+                    .toBe(false);
+            expect(boxes.dashboard.left).toBeGreaterThanOrEqual(0);
+        });
+
         test('keeps the authored aspect ratio', async ({ page }) => {
             await prepare(page);
             await page.goto('/index_dev.html');
