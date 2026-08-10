@@ -144,6 +144,38 @@ export function paintedRatio(page) {
 }
 
 /**
+ * Drags a single touch contact across the play field.
+ *
+ * Playwright's touchscreen only taps, so this goes through CDP to get real
+ * touch-derived pointer events -- the path a phone actually takes, and the one
+ * that would regress if the input layer went back to mouse-only listeners.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number[]} fractions horizontal positions across the canvas, 0..1
+ * @return {Promise<number[]>} pointer.x in stage pixels after each step
+ */
+export async function touchDrag(page, fractions) {
+    const cdp = await page.context().newCDPSession(page);
+    const box = await page.locator('#a-game-canvas').boundingBox();
+    const y = box.y + box.height * 0.9;
+    const readings = [];
+
+    for (const [index, fraction] of fractions.entries()) {
+        const x = box.x + box.width * fraction;
+
+        await cdp.send('Input.dispatchTouchEvent', {
+            type: index === 0 ? 'touchStart' : 'touchMove',
+            touchPoints: [{ x, y }]
+        });
+        await page.waitForTimeout(250);
+        readings.push(await page.evaluate(() => require('app/input/_').pointer.x));
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+    return readings;
+}
+
+/**
  * Starts a specific round from the rounds window, the way a player would.
  *
  * @param {import('@playwright/test').Page} page

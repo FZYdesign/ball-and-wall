@@ -66,7 +66,11 @@ function(stage,
         var w = $(window), d = $(document);
         
         w.bind('resize', $.proxy(this.onWindowResize, this));
-        w.bind('orientationchange', $.proxy(this.onWindowOrientationChange, this));
+        // `orientationchange` is deprecated and does not fire for every case that
+        // changes orientation -- split screen, a resized browser window, desktop
+        // device emulation. `resize` covers all of them, so the prompt is driven
+        // off both rather than getting stuck on screen.
+        w.bind('resize orientationchange', $.proxy(this.onWindowOrientationChange, this));
         
         if ( window === window.top && core.helperApp.platform() != 'wp8' ) {
             w.bind('focus', $.proxy(this.onWindowFocus, this));
@@ -501,6 +505,9 @@ function(stage,
      */
     Game.prototype.onPreloaderComplete = function() {
         $('#a-container').css('visibility', 'visible');
+        // The field is sized against whatever sits above it, and that is only
+        // laid out for real once the container is shown.
+        stage.fit();
         $(document.body).css('backgroundImage', 'url("' + preloader.get('h-bg').src + '")')
                 .attr('id', gameOptions.get('window-games:game'));
         $(document.body)
@@ -618,7 +625,8 @@ function(stage,
     Game.prototype.onWindowResize = function() {
         $(document.body).css('height', window.innerHeight + 'px');
         $(document.body).css('width', window.innerWidth + 'px');
-        input.pointer.updateStageCoords();
+        // Rescales the play field and refreshes the pointer mapping with it.
+        stage.fit();
         window.scrollTo(0, 0);
     };
     
@@ -626,18 +634,22 @@ function(stage,
      * @method onWindowOrientationChange
      */
     Game.prototype.onWindowOrientationChange = function() {
-        if ( !core.helperBrowser.isMobile ) {
+        // The play field is 798x462 -- landscape. The original rule asked iPhones
+        // for portrait, which on a modern phone squeezes the field to a third of
+        // the screen; every device is better off in landscape.
+        var isPortrait = window.innerWidth < window.innerHeight,
+            // A tablet fits the field comfortably either way, so only prompt when
+            // rotating would actually gain meaningful size.
+            wouldGain = window.innerHeight / window.innerWidth > 1.2
+                    && window.innerHeight < 900;
+
+        if ( !core.helperBrowser.isMobile && !input.pointer.isTouchDevice ) {
             return;
         }
-        var isDeviceSupportPortrait = ['iphone', 'ipod'].indexOf(core.helperBrowser.platform.iosDevice) !== -1,
-            isPortraitMode = window.innerWidth < window.innerHeight;
-        
-        if ( (isDeviceSupportPortrait && !isPortraitMode) || (!isDeviceSupportPortrait && isPortraitMode) ) {
+        if ( isPortrait && wouldGain ) {
             this.windowOrientationIndicator.open();
-        } else {
-            if ( this.windowOrientationIndicator.isOpened() ) {
-                this.windowOrientationIndicator.close();
-            }
+        } else if ( this.windowOrientationIndicator.isOpened() ) {
+            this.windowOrientationIndicator.close();
         }
     };
     

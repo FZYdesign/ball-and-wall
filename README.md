@@ -66,11 +66,21 @@ npm run e2e:ui       # Playwright UI mode
 npm run e2e:report   # open the last HTML report
 ```
 
-The suite drives a real browser through boot, a round of gameplay, the level editor,
-and the built production page. It uses the installed Google Chrome; if you do not
-have it, `npx playwright install chrome`.
+The suite drives a real browser through boot, a round of gameplay, mobile layout
+and touch input across emulated phones and tablets, the level editor, and the
+built production page. It uses the installed Google Chrome; if you do not have it,
+`npx playwright install chrome`.
 
 `npm test` runs lint, build and the suite together.
+
+## Mobile
+
+The play field scales to fit the viewport while keeping its 798x462 aspect ratio,
+so phones and tablets get the whole field rather than a slice of it. Input runs on
+Pointer Events, so mouse, touch and pen all take the same path. The field is
+landscape, so portrait phones are prompted to rotate.
+
+Desktop layout is unchanged: the field is never scaled above 1:1.
 
 ## Episodes
 

@@ -161,7 +161,9 @@ function(WindowBase, core, gameOptions, i18) {
             element = $(element);
             element.removeClass('selected');
             
-            if ( element.context == itemEntry.get(0) ) {
+            // jQuery removed the `.context` property in 3.0; comparing it was
+            // silently always false, so no round could ever be selected.
+            if ( element[0] === itemEntry.get(0) ) {
                 element.addClass('selected');
                 this.selectedLevel = itemEntry.attr('data-id') >> 0;
                 this.saveSelectedLevel();

@@ -113,7 +113,10 @@ export default [
             }
         },
         rules: {
-            'no-console': 'off'
+            'no-console': 'off',
+            // Rest-destructuring is the idiomatic way to drop a key; the named
+            // binding it leaves behind is deliberately unused.
+            'no-unused-vars': ['error', { ignoreRestSiblings: true }]
         }
     }
 ];

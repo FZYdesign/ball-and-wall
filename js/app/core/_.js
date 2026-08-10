@@ -11,14 +11,13 @@ define('app/core/_', [
     'app/core/utils/number',
     'app/core/utils/string',
     'app/core/builder',
-    'app/core/fast-click',
     'app/core/event-emitter',
     'app/core/math',
     'app/core/mediator',
     'app/core/tab'
 ], 
 function(helperAds, helperApp, helperBrowser, helperFont, helperFullscreen, helperShare, storageGlobal,
-         StorageLocal, utilsNumber, utilsString, Builder, fastClick, EventEmitter, math, mediator, Tab) {
+         StorageLocal, utilsNumber, utilsString, Builder, EventEmitter, math, mediator, Tab) {
 
     return {
         helperAds: helperAds,
@@ -32,7 +31,6 @@ function(helperAds, helperApp, helperBrowser, helperFont, helperFullscreen, help
         utilsNumber: utilsNumber,
         utilsString: utilsString,
         Builder: Builder,
-        fastClick: fastClick,
         EventEmitter: EventEmitter,
         math: math,
         mediator: mediator,

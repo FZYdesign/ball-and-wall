@@ -364,7 +364,7 @@ function(stage, entity, entities, levels, gameOptions, preloader, dashboard, cor
             el = $(el);
             el.removeClass('selected');
             
-            if ( el.context == event.delegateTarget ) {
+            if ( el[0] === event.delegateTarget ) {
                 el.addClass('selected');
                 _this.selectedBlockId = i;
             }

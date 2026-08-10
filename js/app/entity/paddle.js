@@ -1,10 +1,10 @@
 
 define('app/entity/paddle', 
 [
-    'app/entity/_base', 'app/input/_', 'app/game-options', 'app/stage', 'app/preloader', 'app/entities/bullets', 
-    'app/episodes/_', 'app/sound'
-], 
-function(EntityBase, input, gameOptions, stage, preloader, bullets, episode, sound) {
+    'app/entity/_base', 'app/input/_', 'app/game-options', 'app/stage', 'app/preloader', 'app/entities/bullets',
+    'app/episodes/_', 'app/sound', 'app/core/helper/app'
+],
+function(EntityBase, input, gameOptions, stage, preloader, bullets, episode, sound, helperApp) {
     
     var
         /**
@@ -322,29 +322,29 @@ function(EntityBase, input, gameOptions, stage, preloader, bullets, episode, sou
      * @param {Object} event
      */
     Paddle.prototype.updateMainEntity = function(event) {
-        var _this = this, x, margin, maxWidth;
+        var _this = this, x, margin, maxWidth, keyboardStep;
 
         margin = this.getHalfWidth() - 5;
+        // input.pointer is already in stage pixels, so the keyboard step has to be
+        // too -- otherwise the paddle crawls on a device-pixel-scaled canvas.
+        keyboardStep = 8 * helperApp.pixelRatio() * gameOptions.get('fps_ratio');
 
         if ( input.keyboard.isPressed('left') ) {
-            input.pointer.x = input.pointer.x - (8 * gameOptions.get('fps_ratio'));
-            
+            input.pointer.x = input.pointer.x - keyboardStep;
+
             if ( input.pointer.x < margin ) {
                 input.pointer.x = margin;
             }
         } else if ( input.keyboard.isPressed('right') ) {
-            input.pointer.x = input.pointer.x + (8 * gameOptions.get('fps_ratio'));
-            maxWidth = ((this.getCanvasWidth() - this.getWidth()) *  stage.getScale()) + margin;
-            
+            input.pointer.x = input.pointer.x + keyboardStep;
+            maxWidth = (this.getCanvasWidth() - this.getWidth()) + margin;
+
             if ( input.pointer.x > maxWidth ) {
                 input.pointer.x = maxWidth;
             }
         }
         x = input.pointer.x - margin;
-        
-        if ( stage.getScale() !== 1 ) {
-            x = x * 1 / stage.getScale();
-        }
+
         if ( x <= 0 ) {
             x = 0;
         }

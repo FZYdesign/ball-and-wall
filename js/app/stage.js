@@ -5,8 +5,28 @@ define('app/stage',
 ], 
 function(preloader, input, sound, episode, core) {
     
+    var
+        /**
+         * The play field the game's geometry, levels and sprites are authored
+         * against. Everything on screen is this size scaled by a single factor.
+         *
+         * @property BASE_WIDTH
+         * @static
+         */
+        BASE_WIDTH = 798,
+
+        /**
+         * @property BASE_HEIGHT
+         * @static
+         */
+        BASE_HEIGHT = 462;
+
+
     function Stage() {
         this.element = $('#a-game-canvas');
+        this.canvases = $('#a-game-canvases');
+        this.wrapper = $('#a-game-wrapper');
+        this.scale = 1;
         this.stage = new createjs.Stage('a-game-canvas');
         this.bgFrontWidthHalfWidth = null;
         this.bgBackWidthHalfWidth = null;
@@ -16,23 +36,87 @@ function(preloader, input, sound, episode, core) {
         this.states = {};
         this.timers = {};
         this.initEvents();
-        
-        this.element.attr('width', 798 * core.helperApp.pixelRatio());
-        this.element.attr('height', 462 * core.helperApp.pixelRatio());
-        
-        if ( core.helperApp.pixelRatio() >= 2 ) {
-            this.element.css('width', '798px');
-            this.element.css('height', '462px');
-        }
+
+        // The backing store is authored size x device pixel ratio, so the game
+        // renders at native resolution however the element is then scaled.
+        this.element.attr('width', BASE_WIDTH * core.helperApp.pixelRatio());
+        this.element.attr('height', BASE_HEIGHT * core.helperApp.pixelRatio());
+        this.fit();
     }
-    
+
     /**
      * @method initEvents
      */
     Stage.prototype.initEvents = function() {
-//        this.stage.canvas.bind('click', $.proxy(this.onCanvasClick, this));
+        $(window).bind('resize orientationchange', $.proxy(this.fit, this));
     };
-    
+
+    /**
+     * Scales the play field to fit the viewport, preserving its aspect ratio.
+     *
+     * The canvases are laid out at their authored size and scaled with a single
+     * CSS transform rather than being re-laid-out per breakpoint. That keeps the
+     * dashboard canvas -- absolutely positioned against the 798px field -- glued
+     * to the play field at every size, which per-breakpoint widths could not do.
+     *
+     * It never scales above 1, so anything wide enough for the original layout
+     * renders exactly as before.
+     *
+     * @method fit
+     * @return {Stage}
+     */
+    Stage.prototype.fit = function() {
+        var viewportWidth = $(window).width(),
+            viewportHeight = $(window).height(),
+            // Whatever sits above the field (container padding, the bottom line,
+            // page chrome) eats into the height available to it. Measuring the
+            // wrapper's own top is reliable because nothing above it depends on
+            // the wrapper's height.
+            top = this.wrapper.length ? this.wrapper[0].getBoundingClientRect().top : 0,
+            availableHeight = viewportHeight - (top > 0 && top < viewportHeight ? top : 0),
+            scale;
+
+        scale = Math.min(
+            viewportWidth / BASE_WIDTH,
+            availableHeight / BASE_HEIGHT,
+            1
+        );
+
+        if ( !isFinite(scale) || scale <= 0 ) {
+            scale = 1;
+        }
+        this.scale = scale;
+
+        // The backing store is device-pixel sized, so without an explicit CSS size
+        // the element would render at backing-store dimensions on a retina screen.
+        this.element.css({
+            width: BASE_WIDTH + 'px',
+            height: BASE_HEIGHT + 'px'
+        });
+
+        if ( scale === 1 ) {
+            this.wrapper.removeClass('a-scaled').css({width: '', height: ''});
+            this.canvases.css({transform: '', width: '', height: ''});
+        } else {
+            // A transform does not change the layout box, so the wrapper is sized
+            // to the painted result and clips the oversized box inside it.
+            // Without that the 798px field keeps widening the document and the
+            // page scrolls sideways on a phone.
+            this.wrapper.addClass('a-scaled').css({
+                width: Math.round(BASE_WIDTH * scale) + 'px',
+                height: Math.round(BASE_HEIGHT * scale) + 'px'
+            });
+            this.canvases.css({
+                width: BASE_WIDTH + 'px',
+                height: BASE_HEIGHT + 'px',
+                transform: 'scale(' + scale + ')'
+            });
+        }
+        input.pointer.updateStageCoords();
+
+        return this;
+    };
+
     /**
      * @method getWidth
      * @return {Number}
@@ -40,7 +124,7 @@ function(preloader, input, sound, episode, core) {
     Stage.prototype.getWidth = function() {
         return this.stage.canvas.width;
     };
-    
+
     /**
      * @method getHeight
      * @return {Number}
@@ -48,13 +132,18 @@ function(preloader, input, sound, episode, core) {
     Stage.prototype.getHeight = function() {
         return this.stage.canvas.height;
     };
-    
+
     /**
+     * Ratio between the on-screen size and the backing store. Consumers that
+     * work in stage pixels do not need this -- input/pointer.js already converts.
+     *
      * @method getScale
      * @return {Number}
      */
     Stage.prototype.getScale = function() {
-        return $(this.stage.canvas).width() / this.getWidth();
+        var rect = this.stage.canvas.getBoundingClientRect();
+
+        return rect.width ? rect.width / this.getWidth() : 1;
     };
     
     /**

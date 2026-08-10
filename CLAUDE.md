@@ -66,6 +66,44 @@ js/
 collection and finally `stage.update()`. Update order matters — paddles before
 balls, blocks last. FPS comes from `gameOptions.get('fps')`.
 
+### Coordinate systems
+
+Three different pixel spaces are in play, and mixing them up is the single most
+common source of bugs here:
+
+| Space | What it is | Where it appears |
+| --- | --- | --- |
+| **stage** | canvas backing store, `798 x 462 x devicePixelRatio` | all game geometry, `stage.getWidth()`, `input.pointer.x/y` |
+| **CSS** | the element's on-screen size | `getBoundingClientRect()`, event `clientX/clientY` |
+| **authored** | the fixed `798 x 462` field | levels, sprite offsets, the breakpoint stylesheets |
+
+`input/pointer.js` converts client coordinates to **stage** pixels once, so
+consumers never scale anything themselves. On a phone the two spaces differ by up
+to 3x (device pixel ratio times the fit-to-viewport factor); when the pointer
+still reported CSS pixels, the paddle could only reach the first third of the
+field on a retina screen.
+
+### Mobile
+
+`stage.fit()` scales the play field to the viewport with one CSS transform on
+`#a-game-canvases`, never above 1:1. Anything wide enough for the original layout
+is untouched, so desktop renders exactly as it always did.
+
+Uniform scaling, rather than the per-breakpoint reflow the 2015 stylesheets do,
+is what keeps the dashboard canvas — absolutely positioned against the 798px
+field — glued to the field at every size. Because the two approaches conflict,
+`#a-game-wrapper.a-scaled` in `css/common.css` neutralises the breakpoint offsets
+for the canvas area (`800-wide.css` adds 89px of top padding, for instance) and
+overlays the dashboard on the field instead of letting it hang off the left,
+where a phone has no room for it.
+
+Input is Pointer Events only — one path for mouse, touch and pen. There is no
+touch/mouse fork and no UA sniffing in the input layer.
+
+The field is landscape, so portrait phones get the rotate prompt. That prompt is
+driven off `resize` as well as `orientationchange`, because the latter is
+deprecated and misses split screen, window resizes and device emulation.
+
 ### Events
 
 Two mechanisms, both built on `core/event-emitter`:
@@ -102,6 +140,12 @@ No build list to update: `npm run build` globs `js/app/**`.
 - **jQuery is pinned to 3.7.1, not `^3`.** The code uses `$.proxy` (116 call sites),
   `.bind()` (37), `$.isArray` and `$.isFunction`. jQuery 4 removed all of them, so
   upgrading requires replacing those first.
+- **Watch for jQuery-2-era API that 3.x removed silently.** The codebase was
+  written against 2.1. `$(el).context` was the trap: it now reads `undefined`, so
+  `element.context == target` was always false and every selection handler
+  (rounds, episodes, options, the editor palette) quietly stopped marking
+  anything — you could not pick a level at all. Comparisons like that fail
+  closed, with no error. Prefer `element[0] === target` or `element.is(target)`.
 - **Named `define()` ids are mandatory.** An anonymous `define([...], fn)` will not
   resolve out of the concatenated production bundle. The build fails on any
   dependency id it cannot find, so a typo shows up at build time.
@@ -132,6 +176,12 @@ Two things make the specs deterministic:
   synchronous `require('app/levels')` form rather than scraping the canvas, so
   assertions talk about blocks, balls and rounds.
 
+`tests/mobile.spec.mjs` runs the layout and input assertions across emulated
+phones and tablets: the field must stay inside the viewport, keep its aspect
+ratio, and map a touch at 10%/50%/90% of the canvas to the same fractions of the
+stage. The portrait case skips the gameplay test because portrait deliberately
+shows the rotate prompt instead.
+
 `tests/production.spec.mjs` runs against the *built* `index.html`. This is not
 duplication: production loads one concatenated bundle and one merged stylesheet, so
 bundle-only regressions — a module missing from the bundle, breakpoints lost while
@@ -157,9 +207,15 @@ regression coverage belongs in `tests/` so CI can run it.
 
 ## Known gaps
 
-- Coverage is smoke-level: boot, one round of gameplay, the editor, and the
-  production bundle. Ball/block collision maths, bonuses and the black-hole blocks
-  have no unit tests.
+- Coverage is smoke-level: boot, one round of gameplay, mobile layout and input,
+  the editor, and the production bundle. Ball/block collision maths, bonuses and
+  the black-hole blocks have no unit tests.
+- `css/mobile.css` and `css/ie.css` are orphans -- nothing references them. The
+  breakpoint stylesheets still reflow the old layout for viewports the scaled
+  field now handles, so they could be pared back considerably.
+- The breakpoint stylesheets are chosen by viewport width, which no longer
+  matches the field's rendered size once it is scaled. They only still apply to
+  chrome outside the field (modals, buttons).
 - `js/404.js` and the `dashboard/auth`, `window/auth`, `window/games` flows assume the
   original hosted backend.
 - Ads (`core/helper/ads.js`) and share URLs point at the original `ballandwall.com`

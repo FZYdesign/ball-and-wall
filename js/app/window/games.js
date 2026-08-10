@@ -134,7 +134,7 @@ function(WindowBase, core, gameOptions, i18) {
                 gameName = element.find('.game-name');
                 element.removeClass('selected');
                 
-                if ( element.context == clicked[0] ) {
+                if ( element[0] === clicked[0] ) {
                     element.addClass('selected');
                     value = clicked.attr('data-item').split('|')[1];
                     

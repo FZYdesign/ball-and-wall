@@ -5,16 +5,24 @@ define('app/input/pointer',
 ], 
 function(core) {
     
+    /**
+     * Reports the pointer in *stage* coordinates -- the canvas backing-store
+     * pixels the game's geometry is expressed in -- not CSS pixels. The canvas is
+     * both device-pixel-scaled and, on small screens, scaled down to fit, so the
+     * two differ by up to 3x on a phone. Doing the conversion once here keeps the
+     * mapping in a single place instead of leaving each consumer to correct for
+     * it (paddle.js used to; stage.js's parallax forgot to).
+     */
     function Pointer() {
         core.EventEmitter.call(this);
         this.canvasElement = $('#a-game-canvas');
-        // chrome on windows detect touch too
-        this.isTouchDevice = document.ontouchstart === null && core.helperBrowser.isMobile;
+        // Pointer Events cover mouse, touch and pen through one code path, so
+        // there is nothing to feature-detect. Kept for callers that ask.
+        this.isTouchDevice = navigator.maxTouchPoints > 0;
         this.x = 0;
         this.y = 0;
         this.leftClick = false;
         this.rightClick = false;
-        this.preventDefault = true;
         this.canvasCoords = {};
         this.initialize();
     }
@@ -46,35 +54,24 @@ function(core) {
      */
     Pointer.prototype.initEvents = function() {
         var _this = this, d = $(document);
-        
-        if ( this.isTouchDevice ) {
-            d.bind('touchstart', function(event) {
-                _this.onPointerDown(event);
-            });
-            d.bind('touchend', function(event) {
-                _this.onPointerUp(event);
-            });
-            d.bind('touchcancel', function(event) {
-                _this.onPointerUp(event);
-            });
-            d.bind('touchmove', function(event) {
-                _this.onPointerMove(event);
-            });
-        } else {
-            d.bind('mousedown', function(event) {
-                _this.onPointerDown(event);
-            });
-            d.bind('mouseup', function(event) {
-                _this.onPointerUp(event);
-            });
-            d.bind('mousemove', function(event) {
-                _this.onPointerMove(event);
-            });   
-        }
-        $(window).bind('resize', $.proxy(this.onResize, this));
+
+        d.bind('pointerdown', function(event) {
+            _this.onPointerDown(event);
+        });
+        d.bind('pointerup', function(event) {
+            _this.onPointerUp(event);
+        });
+        d.bind('pointercancel', function(event) {
+            _this.onPointerUp(event);
+        });
+        d.bind('pointermove', function(event) {
+            _this.onPointerMove(event);
+        });
+
+        // The canvas rect moves when the viewport changes, and scrolling shifts
+        // it relative to the client coordinates the events report.
+        $(window).bind('resize orientationchange scroll', $.proxy(this.onResize, this));
         this.canvasElement.bind('click', $.proxy(this.onCanvasClick, this));
-        core.mediator.addListener('windowOpen', $.proxy(this.onWindowOpen, this));
-        core.mediator.addListener('windowClose', $.proxy(this.onWindowClose, this));
     };
 
     /**
@@ -112,34 +109,32 @@ function(core) {
      * @method onPointerDown
      */
     Pointer.prototype.onPointerDown = function(event) {
-        if ( this.isTouchDevice ) {
+        // Touch and pen contacts both report button 0, so this needs no branch.
+        if ( event.button === 0 ) {
             this.leftClick = true;
-        } else {
-            // left click
-            if ( event.button === 0 ) {
-                this.leftClick = true;
-            // right click
-            } else if ( event.button === 2 ) {
-                this.rightClick = true;
-            }
+        } else if ( event.button === 2 ) {
+            this.rightClick = true;
         }
+        // A touch only reports a position when it starts, so seed it here or the
+        // paddle jumps from wherever the previous contact left it.
+        this.onPointerMove(event);
     };
 
     /**
      * @method onPointerUp
      */
     Pointer.prototype.onPointerUp = function(event) {
-        if ( this.isTouchDevice ) {
+        // pointercancel carries no button, so clear both rather than trust it.
+        if ( event.type === 'pointercancel' ) {
             this.leftClick = false;
             this.rightClick = false;
-        } else {
-            // left click
-            if ( event.button === 0 ) {
-                this.leftClick = false;
-            // right click
-            } else if ( event.button === 2 ) {
-                this.rightClick = false;
-            }
+
+            return;
+        }
+        if ( event.button === 0 ) {
+            this.leftClick = false;
+        } else if ( event.button === 2 ) {
+            this.rightClick = false;
         }
     };
 
@@ -148,60 +143,54 @@ function(core) {
      * @param {Object} event
      */
     Pointer.prototype.onPointerMove = function(event) {
-        var dx, dy;
+        var coords = this.canvasCoords, dx, dy;
 
-        event.preventDefault();
+        // Secondary contacts of a multi-touch gesture would fight the primary one
+        // over the paddle position.
+        if ( event.isPrimary === false ) {
+            return;
+        }
+        if ( !coords.width || !coords.height ) {
+            this.onResize();
+            coords = this.canvasCoords;
 
-        if ( this.isTouchDevice ) {
-            var touches = event.originalEvent.changedTouches,
-                isMsPointer = window.navigator.msPointerEnabled,
-                firstTouch = isMsPointer ? event.originalEvent : touches[0];
-
-            if ( isMsPointer && !event.isPrimary ) {
+            if ( !coords.width || !coords.height ) {
                 return;
             }
-            if ( !isMsPointer ) {
-                if ( event.originalEvent && event.originalEvent.length > 1 ) {
-                    return;
-                }
-            }
-            
-            dx = firstTouch.clientX;
-            dy = firstTouch.clientY;
-        } else {
-            dx = event.clientX;
-            dy = event.clientY;
         }
-        dx = dx - this.canvasCoords.left;
-        dy = dy - this.canvasCoords.top;
-        
-        this.x = dx > 0 ? (dx < this.canvasCoords.width ? dx : this.canvasCoords.width) : 0;
-        this.y = dy > 0 ? (dy < this.canvasCoords.height ? dy : this.canvasCoords.height) : 0;
+        dx = event.clientX - coords.left;
+        dy = event.clientY - coords.top;
+
+        dx = dx > 0 ? (dx < coords.width ? dx : coords.width) : 0;
+        dy = dy > 0 ? (dy < coords.height ? dy : coords.height) : 0;
+
+        this.x = dx * coords.scaleX;
+        this.y = dy * coords.scaleY;
     };
 
     /**
+     * Caches the canvas rect and the CSS-pixel -> stage-pixel factors.
+     *
      * @method onResize
      */
     Pointer.prototype.onResize = function() {
-        this.canvasCoords = this.canvasElement.offset();
-        this.canvasCoords.width = this.canvasElement.width();
-        this.canvasCoords.height = this.canvasElement.height();
-    };
-    
-    /**
-     * @method onWindowOpen
-     */
-    Pointer.prototype.onWindowOpen = function() {
-        this.preventDefault = false;
-    };
-    
-    /**
-     * @method onWindowClose
-     */
-    Pointer.prototype.onWindowClose = function() {
-        if ( !$('.lbx-window').length ) {
-            this.preventDefault = true;
+        var canvas = this.canvasElement[0], rect;
+
+        if ( !canvas ) {
+            return;
         }
+        // getBoundingClientRect(), unlike jQuery's width()/offset(), reflects the
+        // fit-to-viewport transform and is in the same client space as the events.
+        rect = canvas.getBoundingClientRect();
+
+        this.canvasCoords = {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            scaleX: rect.width ? canvas.width / rect.width : 1,
+            scaleY: rect.height ? canvas.height / rect.height : 1
+        };
     };
    
     var instance = null;
