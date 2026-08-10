@@ -6,14 +6,16 @@ the toolchain was modernised in 2026 while the game code was deliberately left i
 ## Commands
 
 ```sh
-npm install     # installs deps and syncs vendor/ (postinstall)
-npm run dev     # static server -> http://localhost:8080/index_dev.html
-npm run build   # dist/ bundles + regenerates index.html / levels-editor.html
-npm run lint    # ESLint
-npm test        # lint + build
+npm install       # installs deps and syncs vendor/ (postinstall)
+npm run dev       # static server -> http://localhost:8080/index_dev.html
+npm run build     # dist/ bundles + regenerates index.html / levels-editor.html
+npm run lint      # ESLint
+npm run e2e       # Playwright end-to-end suite
+npm test          # lint + build + e2e
 ```
 
 `npm run dev -- --port 3000` changes the port.
+`npm run e2e:headed` watches the browser; `npm run e2e:ui` opens the Playwright UI.
 
 Open `index_dev.html` (uncompressed sources, loaded individually by RequireJS) while
 developing. `index.html` is **generated** by `npm run build` — never edit it by hand;
@@ -114,9 +116,50 @@ No build list to update: `npm run build` globs `js/app/**`.
   over the wire — if you stand up a real backend, replace that with a proper scheme
   (TLS + server-side password hashing); MD5 is not an acceptable password hash.
 
+## Testing
+
+`tests/` holds a Playwright suite that drives a real browser. `tests/game-page.mjs`
+carries the shared helpers; start there.
+
+Two things make the specs deterministic:
+
+- **Seeded state.** `prepare(page)` writes the game's single localStorage key
+  (`baw-storage:game-options`) before any page script runs, which switches off the
+  first-run tour, the cookie banner and audio. Driving those overlays through the DOM
+  instead would couple every spec to the tour's markup. Sub-objects are merged
+  shallowly by `game-options.js`, so each one must be supplied in full.
+- **Real game state.** `readState(page)` reaches into the running game with the
+  synchronous `require('app/levels')` form rather than scraping the canvas, so
+  assertions talk about blocks, balls and rounds.
+
+`tests/production.spec.mjs` runs against the *built* `index.html`. This is not
+duplication: production loads one concatenated bundle and one merged stylesheet, so
+bundle-only regressions — a module missing from the bundle, breakpoints lost while
+inlining `@import` — cannot show up anywhere else. `tests/global-setup.mjs` rebuilds
+`dist/` before every run; it deliberately does not live in `webServer.command`,
+which is skipped whenever an existing dev server is reused and would let the
+production specs assert against a stale bundle.
+
+Playwright is pinned to `channel: 'chrome'` (the installed Google Chrome) rather
+than its bundled Chromium, which is no longer published for macOS 13. CI installs
+Chrome the same way, so both run the same browser.
+
+## Browser automation via MCP
+
+`.mcp.json` configures two MCP servers for interactive debugging:
+
+- **chrome-devtools** — DOM snapshots, console, network, performance traces,
+  Lighthouse. Best for "why is this slow / what did the network do".
+- **playwright** — accessibility-tree snapshots and scripted interaction.
+
+Both are pinned and run `--isolated` (throwaway profile). They are for exploration;
+regression coverage belongs in `tests/` so CI can run it.
+
 ## Known gaps
 
-- No automated tests. `npm test` runs lint + build only.
+- Coverage is smoke-level: boot, one round of gameplay, the editor, and the
+  production bundle. Ball/block collision maths, bonuses and the black-hole blocks
+  have no unit tests.
 - `js/404.js` and the `dashboard/auth`, `window/auth`, `window/games` flows assume the
   original hosted backend.
 - Ads (`core/helper/ads.js`) and share URLs point at the original `ballandwall.com`

@@ -57,6 +57,21 @@ npm run lint:fix   # apply the auto-fixable subset
 Errors are real defects and fail CI. Warnings are pre-existing 2015-era style
 (mostly `==` vs `===`) that is left alone deliberately — see `CLAUDE.md`.
 
+## Test
+
+```sh
+npm run e2e          # Playwright suite (headless)
+npm run e2e:headed   # watch it run in a browser
+npm run e2e:ui       # Playwright UI mode
+npm run e2e:report   # open the last HTML report
+```
+
+The suite drives a real browser through boot, a round of gameplay, the level editor,
+and the built production page. It uses the installed Google Chrome; if you do not
+have it, `npx playwright install chrome`.
+
+`npm test` runs lint, build and the suite together.
+
 ## Episodes
 
 Game has 2 episodes called space and pegasus. Space assets (images) were made by me and they are totally FREE.

@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.6.0",
+        "--isolated",
+        "--viewport",
+        "1280x800"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.79",
+        "--isolated",
+        "--browser",
+        "chrome",
+        "--viewport-size",
+        "1280,800"
+      ]
+    }
+  }
+}

@@ -30,7 +30,15 @@ const vendorGlobals = {
 
 export default [
     {
-        ignores: ['dist/**', 'vendor/**', 'node_modules/**', 'js/lib/**', 'css/**']
+        ignores: [
+            'dist/**',
+            'vendor/**',
+            'node_modules/**',
+            'js/lib/**',
+            'css/**',
+            'test-results/**',
+            'playwright-report/**'
+        ]
     },
     js.configs.recommended,
     {
@@ -81,11 +89,28 @@ export default [
         }
     },
     {
-        files: ['scripts/**/*.mjs', 'eslint.config.mjs'],
+        files: ['scripts/**/*.mjs', 'eslint.config.mjs', 'playwright.config.mjs'],
         languageOptions: {
             ecmaVersion: 2023,
             sourceType: 'module',
             globals: globals.node
+        },
+        rules: {
+            'no-console': 'off'
+        }
+    },
+    {
+        // Specs run in Node but their page.evaluate() callbacks are serialised and
+        // executed in the browser, so both global sets are legitimately in scope.
+        files: ['tests/**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 2023,
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
+                ...globals.browser,
+                require: 'readonly'
+            }
         },
         rules: {
             'no-console': 'off'

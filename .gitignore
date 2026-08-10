@@ -15,3 +15,12 @@ vendor/
 
 # Generated: `npm run build` recreates this
 dist/
+
+# Playwright output
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Snapshots and screenshots dropped by the MCP browser servers
+.playwright-mcp/

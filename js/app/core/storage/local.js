@@ -5,12 +5,17 @@ define('app/core/storage/local',
 ], 
 function(q, appHelper) {
 
-    function Local() {
-        this._ns = 'baw-storage';
+    var BASE_NS = 'baw-storage';
+
+    /**
+     * @param {String} [ns] namespace, appended to the base key
+     */
+    function Local(ns) {
+        this._ns = BASE_NS;
         this.storage = null;
-        this.initialize('');
+        this.initialize(ns || '');
     }
-    
+
     /**
      * @method initialize
      * @param {String} ns
@@ -21,7 +26,28 @@ function(q, appHelper) {
         }
         if ( appHelper.platform() != 'chrome' ) {
             this._test();
+            this._migrateFromBaseKey();
         }
+    };
+
+    /**
+     * Until the constructor honoured its `ns` argument, every instance wrote to
+     * the un-namespaced base key. Existing players have their settings and
+     * unlocked levels stored there, so move them across the first time.
+     *
+     * @method _migrateFromBaseKey
+     */
+    Local.prototype._migrateFromBaseKey = function() {
+        if ( !this.storage || this._ns === BASE_NS ) {
+            return;
+        }
+        try {
+            var legacy = this.storage.getItem(BASE_NS);
+
+            if ( legacy !== null && this.storage.getItem(this._ns) === null ) {
+                this.storage.setItem(this._ns, legacy);
+            }
+        } catch (ex) {}
     };
 
     /**

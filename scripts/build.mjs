@@ -249,6 +249,20 @@ for (const [name, inputs] of Object.entries(cssBundles)) {
         legalComments: 'none',
         logLevel: 'warning'
     });
+
+    // A local @import surviving into the output means the browser will ignore it
+    // (it is no longer the first rule) and those styles are silently lost.
+    const emitted = readFileSync(outfile, 'utf8');
+    const survivors = [...emitted.matchAll(/@import\s+url\(\s*['"]?([^'")]+)/g)]
+            .map((match) => match[1])
+            .filter((href) => !/^(https?:)?\/\//.test(href) && !href.startsWith('data:'));
+
+    if (survivors.length) {
+        throw new Error(
+            `dist/${name} still contains un-inlined @import: ${survivors.join(', ')}.\n` +
+            'Those rules would be dropped by the browser.'
+        );
+    }
 }
 
 console.log(`css:  ${Object.keys(cssBundles).length} bundles -> dist/`);

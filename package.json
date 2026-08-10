@@ -16,7 +16,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
-    "test": "npm run lint && npm run build"
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
+    "test": "npm run lint && npm run build && npm run e2e"
   },
   "dependencies": {
     "fancyselect": "1.0.3",
@@ -25,6 +29,7 @@
     "q": "1.5.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.0",
     "globals": "^16.5.0"
