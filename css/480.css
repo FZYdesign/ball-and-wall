@@ -22,9 +22,6 @@
 #a-game-canvas, #a-game-canvases {
     width: 320px;
 }
-#a-auth-wrapper {
-    display: none;
-}
 #a-game-dashboard {
     top: -10px;
     left: 25px;

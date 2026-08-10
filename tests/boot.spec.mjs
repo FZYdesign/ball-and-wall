@@ -48,19 +48,31 @@ test.describe('boot (development sources)', () => {
         expect(measured).toBeGreaterThan(10);
     });
 
-    test('honours the seeded options instead of showing first-run overlays', async ({ page }) => {
+    test('honours the seeded options instead of showing the first-run tour', async ({ page }) => {
         await prepare(page);
         await page.goto('/index_dev.html');
         await waitForBoot(page);
 
         // Guards the storage namespacing in core/storage/local.js: if the seeded
-        // key stops being read, both overlays reappear and this fails.
-        await expect(page.locator('#cookie')).toHaveCount(0);
+        // key stops being read, the tour reappears and this fails.
         await expect(page.locator('.lbx-first-time')).toHaveCount(0);
 
         const options = await page.evaluate(() => window.BallAndWall.gameOptions.get('window-options'));
 
-        expect(options.cookieInfo).toBe(true);
         expect(options.music).toBe('off');
+        expect(options.lang).toBe('en-us');
+    });
+
+    test('carries no account, share or advertising surface', async ({ page }) => {
+        await prepare(page);
+        await page.goto('/index_dev.html');
+        await waitForBoot(page);
+
+        // These were all wired to a backend that no longer exists.
+        await expect(page.locator('#cookie')).toHaveCount(0);
+        await expect(page.locator('.fork-me')).toHaveCount(0);
+        await expect(page.locator('#a-level-editor')).toHaveCount(0);
+        await expect(page.locator('#a-auth, #a-auth-wrapper')).toHaveCount(0);
+        await expect(page.locator('.ads, .ads-label')).toHaveCount(0);
     });
 });

@@ -1,6 +1,4 @@
 export default {
-    'cookie-info': 'Ta strona używa ciasteczek (cookies). Korzystając ze strony akceptujesz politykę prywatności oraz wyrażasz zgodę na używanie ciasteczek zgodnie z aktualnymi ustawieniami przeglądarki<div class="small primary btn"><a href="#">Tak, rozumiem</a></div>',
-    'usage-data-info': 'Ta aplikacja zbiera anonimowe dane dotyczące jej używania tj. liczba uruchomień, czas spędzony w grze itp. <br/>Korzystając z gry akceptujesz politykę prywatności. <label for="a" style="font-weight: bold"><input id="a" type="checkbox"/> Wysyłaj anonimowe statystyki.</label><div class="small primary btn"><a href="#">Zamknij</a></div>',
     'back-to-main-page': 'Wróć do strony głównej',
     'not-supported': 'Nie obsługiwane',
     'on': 'Włączone',
@@ -16,14 +14,12 @@ export default {
     'logout': 'Wyloguj się',
     'loading': 'Ładuję',
     'selected': 'wybrane',
-    'welcome-player': 'Witaj',
     'time': 'Czas',
     'score': 'Punkty',
     'speed': 'Prędkość',
     'lives': 'Życia',
     'round': 'Runda',
     'episode': 'Epizod',
-    'guest': 'Gość',
     'game-over': 'Koniec gry',
     'clear-level': 'Wyczyść',
     'load-save': 'Ładuj/Zapisz',
@@ -36,8 +32,6 @@ export default {
     'your-stats': 'Twoje statystyki',
     'global-stats': 'Globalne statystyki',
     // auth button
-    'auth-button-logged': '<img src="{flag_src}" alt="">&nbsp;&nbsp;Witaj {player_name}!',
-    'auth-button-unlogged': 'Zaloguj się/Zarejestruj się',
     // auth dashboard window - stats tab
     'stats-not-found': 'Nie znaleziono wyników',
     'stats-player': 'Gracz',
@@ -48,10 +42,6 @@ export default {
     'stats-created': 'Data wygrania',
     'stats-filter': 'Zmień filtr',
     // auth dashboard window - panel
-    'auth-panel:account-from': 'Konto od',
-    'auth-panel:last-login': 'Ostatnie logowanie',
-    'auth-panel:player-country': 'Kraj gracza',
-    'auth-panel:most-played': 'Najczęsciej grane epizody',
     // auth dashboard window - filter
     'by-episode': 'Wg. epizodu',
     'by-episode:all-episodes': 'Wszystkie epizody',
@@ -67,20 +57,6 @@ export default {
     'time-range:today': 'Dzisiaj',
     'time-range:last-week': 'Ostatni tydzień',
     'time-range:all-time': 'Cały czas',
-    // auth window - login and register
-    'auth-register-info': 'Rejestrując się w <strong>Ball And Wall</strong> uzyskasz dostęp do funkcjonalności oferowanych tylko zarejestrowanym użytkownikom.',
-    'auth-register-error': 'Wprowadzone dane są błędne. Sprawdź poprawność loginu lub hasła lub zarejestruj się używając innej nazwy gracza.',
-    'auth-login-info': 'Zaloguj się jako gracz w serwisie lub jeśli nie masz jeszcze konta zarejestruj się klikając w link "Przejdź do formularza rejestracji".',
-    'auth-login-error': 'Wprowadzone dane są błędne. Sprawdź poprawność <br/>loginu i/lub hasła i spróbuj ponownie.',
-    'auth-nickname': 'Login',
-    'auth-nickname-placeholder': 'Tutaj wpisz nazwę gracza',
-    'auth-password': 'Hasło',
-    'auth-password-placeholder': 'Tutaj wpisz hasło',
-    'auth-register': 'Zarejestruj się',
-    'auth-login': 'Zaloguj się',
-    'auth-go-to-login': 'Przejdź do formularza logowania',
-    'auth-go-to-register': 'Przejdź do formularza rejestracji',
-    'auth-connect-via': 'Zaloguj się przez',
     // games window
     'games-header': 'Wybierz epizod',
     'games-episode:space': 'Space',
@@ -106,10 +82,8 @@ export default {
     'round-win-retry': 'Ponów rundę',
     'round-win-next-round': 'Następna runda',
     'round-win-select-episode': 'Wybierz epizod',
-    'round-win.share-title': 'Kolejny poziom w Ball And Wall zaliczony!',
-    'round-win.share-description': 'Zajeło mi to {time} sekund i dało w sumie {score} punktów :) Sprawdź!',
     // episode-win window
-    'episode-win-header': 'Gratulacje {player}!',
+    'episode-win-header': 'Gratulacje!',
     'episode-win-content:space': 'Udało Ci się ukończyć epizod <strong>{episode}</strong>. Świat międzygwiezdnych galaktyk widocznie nie stanowił dla Ciebie najmniejszego problemu. Jesteś zdobywcą na miarę gwiezdnej floty, ale czy dasz radę pokonać szalony i kolorowy świat rodem z klasycznych platformówek na Pegasusa?',
     'episode-win-content:pegasus': 'Udało Ci się ukończyć epizod <strong>{episode}</strong>. Jesteś najlepszy! Dotrwałeś do końca epizodu pokazałeś klasę oraz umiejętności rozgryzając Pegasus\'owskie poziomy. Przygodę w świecie platformówek możesz zaliczyć do udanych.',
     // preload indicator
@@ -155,7 +129,6 @@ export default {
     'help-contact-sending': 'Trwa wysyłanie wiadomości...',
     'help-contact-sent': 'Wiadomość została wysłana poprawnie.',
     //
-    'dashboard-auth-unlogged': 'Kliknij tutaj, \naby się zalogować',
     'alert-title': 'Ostrzeżenie',
     'confirm-title': 'Potwierdzenie',
     'confirm-change-language': 'Zmieniono język na <strong>{lang}</strong>, aby uwidocznić zmiany wymagane jest odświeżenie strony. Czy chcesz to teraz zrobić?',

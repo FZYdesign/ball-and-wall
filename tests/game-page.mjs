@@ -3,8 +3,8 @@
  *
  * The game persists everything through one localStorage key, so seeding that key
  * before the page scripts run is what gives a test a deterministic starting
- * state -- no first-run tour, no cookie banner, no audio. Driving those overlays
- * through the DOM instead would make every spec depend on the tour's markup.
+ * state -- no first-run tour, no audio. Driving the tour through the DOM instead
+ * would make every spec depend on its markup.
  */
 
 /** Matches core/storage/local.js: base namespace + the game-options namespace. */
@@ -20,8 +20,7 @@ export const CLEAN_STATE = {
         music: 'off',
         sound: 'off',
         lang: 'en-us',
-        fps: 60,
-        cookieInfo: true
+        fps: 60
     },
     'window-first-time': { needToShow: false },
     'window-rounds': { data: [] }

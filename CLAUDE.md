@@ -53,15 +53,14 @@ js/
     preloader.js         per-episode asset loading via createjs.LoadQueue
     facade.js            full-screen overlay text ("Round 1", "Game over")
     game-options.js      persisted settings, emits change:<key>
-    player.js            backend auth against API_ADDR (see caveat below)
-    sound.js  dashboard.js  indicator.js  levels-editor.js
+    sound.js  dashboard.js  levels-editor.js
     core/                framework-ish helpers: EventEmitter, mediator, math,
                          storage (localStorage / chrome.storage), browser + app
                          detection, DOM builder, tab
     entity/              a single game object (ball, paddle, bullet, bonus, block,
                          particle, tail, explosion, score, cloud)
     entities/            the collection managing many of one entity type
-    dashboard/           score / lives / round / speed / time / auth widgets,
+    dashboard/           score / lives / round / speed / time widgets,
                          drawn on a second canvas (#a-game-dashboard)
     window/              modal dialogs built as DOM (not canvas)
     input/               keyboard + pointer
@@ -118,7 +117,7 @@ deprecated and misses split screen, window resizes and device emulation.
 
 Two mechanisms, both built on `core/event-emitter`:
 
-- **direct** — `dashboard.addListener('clickPlay', ...)`, `player.addListener('login', ...)`
+- **direct** — `dashboard.addListener('clickPlay', ...)`, `windowRounds.addListener('play', ...)`
 - **`core.mediator`** — global bus for game-wide moments: `game:game-start`,
   `game:game-over`, `game:stage-clear`, `game:level-start`
 
@@ -185,11 +184,11 @@ it is handy from the console.
   has no @2x variant.
 - **Episode art licensing:** `space` assets are free (author-made). `pegasus` images
   were bought from graphicriver and are **not** covered by this repo's MIT licence.
-- **`player.js` talks to a backend that is not in this repo** (`API_ADDR`, empty by
-  default). With `API_ADDR` empty every auth request fails and the game falls back to
-  guest play, which is why login appears to do nothing locally. It sends `md5(password)`
-  over the wire — if you stand up a real backend, replace that with a proper scheme
-  (TLS + server-side password hashing); MD5 is not an acceptable password hash.
+- **Canvas text needs a repaint once web fonts land.** The dashboard is a static
+  canvas that paints on load and then only when a value changes, so a paint that
+  happens before Orion-Pax and segmentled arrive bakes in the fallback font
+  permanently. `dashboard.js` repaints on `document.fonts.ready` for that reason —
+  the timing is invisible until asset loading gets faster or slower.
 
 ## Testing
 
@@ -284,7 +283,3 @@ regression coverage belongs in `tests/` so CI can run it.
 - The breakpoint stylesheets are chosen by viewport width, which no longer
   matches the field's rendered size once it is scaled. They only still apply to
   chrome outside the field (modals, buttons).
-- `js/404.js` and the `dashboard/auth`, `window/auth`, `window/games` flows assume the
-  original hosted backend.
-- Ads (`core/helper/ads.js`) and share URLs point at the original `ballandwall.com`
-  deployment.

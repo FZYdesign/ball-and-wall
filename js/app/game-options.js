@@ -37,8 +37,7 @@ var
             music: 'on',
             sound: 'on',
             lang: null,
-            fps: _FPS,
-            cookieInfo: false
+            fps: _FPS
         },
         'window-first-time': {
             needToShow: true

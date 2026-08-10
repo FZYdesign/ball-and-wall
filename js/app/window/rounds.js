@@ -34,28 +34,14 @@ Rounds.prototype.header = function() {
  * @method model
  */
 Rounds.prototype.model = function() {
-    var adsTarget = 'games' + (core.helperAds.getScreenClass() == 'big' ? '_728x90' : ''),
-        onPlayClick = $.proxy(this.onPlayClick, this),
+    var onPlayClick = $.proxy(this.onPlayClick, this),
         onBackClick = $.proxy(this.onBackClick, this),
-        onRoundsScroll = $.proxy(this.onRoundsScroll, this),
-        adsContainer;
-
-    if ( core.helperApp.platform() == 'chrome' ) {
-        adsContainer = {tag: 'webview', src: API_ADDR + 'ads-chrome.html/' + adsTarget};
-    } else {
-        adsContainer = {tag: 'iframe', src: API_ADDR + 'ads-web.html/' + adsTarget,
-            scrolling: 'no', frameborder: '0', vspace: '0', marginheight: '0', marginwidth: '0',
-            hspace: '0', allowtransparency: 'true'};
-    }
+        onRoundsScroll = $.proxy(this.onRoundsScroll, this);
 
     return {
         tag: 'div', className: 'games-wrapper', childs: [
             {tag: 'div', className: 'games-window', childs: [], events: [{scroll: onRoundsScroll}]},
-            {tag: 'div', className: 'ads ads-' + core.helperAds.getScreenClass(), childs: [
-                core.helperAds.isOn() ? {tag: 'div', className: 'ads-label', html: 'advertisement'} : {},
-                core.helperAds.isOn() ? adsContainer : {}
-            ]},
-            {tag: 'div', className: 'row buttons', styles: core.helperAds.isOn() ? {} : {marginTop: 24, paddingBottom: 44},
+            {tag: 'div', className: 'row buttons', styles: {marginTop: 24, paddingBottom: 44},
                 childs: [
                     EPISODES.length > 1 ? {tag: 'div', className: 'medium primary btn icon-left icon-arrow-left ' +
                                 (this.options.game == 'pegasus' ? 'warning' : ''), childs: [

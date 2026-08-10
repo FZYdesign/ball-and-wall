@@ -1,4 +1,3 @@
-import helperAds from './helper/ads.js';
 import helperApp from './helper/app.js';
 import helperBrowser from './helper/browser.js';
 import helperFont from './helper/font.js';
@@ -15,7 +14,6 @@ import mediator from './mediator.js';
 import Tab from './tab.js';
 
 export default {
-    helperAds: helperAds,
     helperApp: helperApp,
     helperBrowser: helperBrowser,
     helperFont: helperFont,

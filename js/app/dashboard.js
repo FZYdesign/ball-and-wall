@@ -99,14 +99,6 @@ Dashboard.prototype.getRound = function() {
 };
 
 /**
- * @method getAuth
- * @return {DashboardAuth}
- */
-Dashboard.prototype.getAuth = function() {
-    return this.auth;
-};
-
-/**
  * @method update
  */
 Dashboard.prototype.update = function() {
@@ -144,7 +136,6 @@ Dashboard.prototype._build = function() {
     this.speed = new dashboard.Speed(this);
     this.lives = new dashboard.Lives(this);
     this.round = new dashboard.Round(this);
-    this.auth = new dashboard.Auth(this);
 
     if ( !this.stage ) {
         return;
@@ -157,7 +148,6 @@ Dashboard.prototype._build = function() {
     this.stage.addChild(this.score.entity);
     this.stage.addChild(this.speed.entity);
     this.stage.addChild(this.round.entity);
-    this.stage.addChild(this.auth.entity);
 
     $.each(episode.getManifest().dashboard.buttons, function(i, obj) {
         var o = new createjs[obj.type]();
@@ -184,6 +174,16 @@ Dashboard.prototype._build = function() {
     if ( this.lives.entity ) {
         this.stage.addChild(this.lives.entity);
     }
+    // The dashboard is a static canvas: it paints once and only repaints when a
+    // value changes. Canvas text takes whatever font is available at draw time,
+    // so painting before the web fonts land bakes in the fallback and nothing
+    // ever corrects it. Repaint when the fonts are actually ready.
+    if ( document.fonts && document.fonts.ready ) {
+        document.fonts.ready.then(function() {
+            _this.stage.update();
+        });
+    }
+    // Kept for browsers without the font loading API.
     setTimeout(function() {
         _this.stage.update();
     }, 1000);

@@ -32,7 +32,6 @@ export default function() {
         {id: 'c-btn-help', src: FULLADDR + 'images/episodes/pegasus/btn-help.png'},
         {id: 'c-btn-options', src: FULLADDR + 'images/episodes/pegasus/btn-options.png'},
         {id: 'c-btn-play', src: FULLADDR + 'images/episodes/pegasus/btn-play.png'},
-        {id: 'c-btn-user', src: FULLADDR + 'images/episodes/pegasus/btn-user.png'},
         {id: 'c-cloud', src: FULLADDR + 'images/episodes/pegasus/cloud.png'},
         // dashboard
         {id: 'c-dashboard-bg', src: FULLADDR + 'images/episodes/pegasus/dashboard-bg.png'},

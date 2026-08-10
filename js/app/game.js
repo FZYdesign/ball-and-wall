@@ -2,9 +2,7 @@ import stage from './stage.js';
 import entities from './entities/_.js';
 import entity from './entity/_.js';
 import dashboard from './dashboard.js';
-import player from './player.js';
 import core from './core/_.js';
-import indicator from './indicator.js';
 import preloader from './preloader.js';
 import i18 from './i18/_.js';
 import sound from './sound.js';
@@ -43,10 +41,8 @@ function Game(options) {
     if ( this.options.customLevel ) {
         episode.use(this.options.customLevel.split(':')[0]).lock(true);
     }
-    this.applyI18();
     preloader.load();
 
-    this.windowAuth = new _window.Auth();
     this.windowFirstTime = new _window.FirstTime();
     this.windowGames = new _window.Games();
     this.windowHelp = new _window.Help();
@@ -80,9 +76,6 @@ Game.prototype.initEvents = function() {
         d.bind('webkitvisibilitychange', $.proxy(this.onWindowVisibilityChange, this));
     }
     $('#' + stage.stage.canvas.id).bind('click', $.proxy(this.onStageClick, this));
-    $('#a-auth').bind('click', $.proxy(this.onBtnUserClick, this));
-    this.windowAuth.addListener('clickLogin', $.proxy(this.onWindowAuthClickLogin, this));
-    this.windowAuth.addListener('clickRegister', $.proxy(this.onWindowAuthClickRegister, this));
     this.windowFirstTime.addListener('close', $.proxy(this.onWindowFirstTimeClose, this));
     this.windowGames.addListener('selectEpisode', $.proxy(this.onWindowGamesSelectEpisode, this));
     this.windowRounds.addListener('back', $.proxy(this.onWindowRoundsBack, this));
@@ -96,19 +89,8 @@ Game.prototype.initEvents = function() {
     dashboard.addListener('clickHelp', $.proxy(this.onBtnHelpClick, this));
     dashboard.addListener('clickOptions', $.proxy(this.onBtnOptionsClick, this));
     dashboard.addListener('clickPlay', $.proxy(this.onBtnStartGameClick, this));
-    dashboard.addListener('clickUser', $.proxy(this.onBtnUserClick, this));
     gameOptions.addListener('change:window-games', $.proxy(this.onEpisodeChange, this));
-    player.addListener('login', $.proxy(this.onPlayerLogin, this));
-    player.addListener('logout', $.proxy(this.onPlayerLogout, this));
-    player.addListener('register', $.proxy(this.onPlayerRegister, this));
     preloader.addListener('complete', $.proxy(this.onPreloaderComplete, this));
-};
-
-/**
- * @method applyI18
- */
-Game.prototype.applyI18 = function() {
-    $('#a-level-editor').text(i18._('le-header'));
 };
 
 /**
@@ -297,64 +279,6 @@ Game.prototype.onEpisodeChange = function(currentOptions, prevOptions) {
 };
 
 /**
- * @method onPlayerLogin
- * @param {Object} event
- */
-Game.prototype.onPlayerLogin = function(event) {
-    // Support for logged players
-    if ( event.result == 'ok' ) {
-        dashboard.getAuth().login(event.response);
-
-        if ( !event.silentMode ) {
-            this.windowAuthDashboard.open();
-        }
-        indicator.hide();
-    } else {
-        dashboard.getAuth().logout();
-
-        if ( event.silentMode ) {
-            indicator.hide();
-        } else {
-            setTimeout($.proxy(function() {
-                this.windowAuth.open('login', true);
-                indicator.hide();
-            }, this), 1000);
-        }
-    }
-};
-
-/**
- * @method onPlayerLogout
- */
-Game.prototype.onPlayerLogout = function() {
-    indicator.hide();
-};
-
-/**
- * @method onPlayerRegister
- * @param {Object} event
- */
-Game.prototype.onPlayerRegister = function(event) {
-    // Support for register players
-    if ( event.result == 'ok' ) {
-        dashboard.getAuth().login(event.response);
-        this.windowAuthDashboard.open();
-        indicator.hide();
-    } else {
-        dashboard.getAuth().logout();
-
-        if ( event.silentMode ) {
-            indicator.hide();
-        } else {
-            setTimeout($.proxy(function() {
-                this.windowAuth.open('register', true);
-                indicator.hide();
-            }, this), 1000);
-        }
-    }
-};
-
-/**
  * @method onBtnStartGameClick
  * @param {event} event
  */
@@ -395,19 +319,6 @@ Game.prototype.onBtnHelpClick = function(event) {
         event.preventDefault();
     }
     this.windowHelp.open();
-};
-
-/**
- * @method onBtnUserClick
- * @param {event} event
- */
-Game.prototype.onBtnUserClick = function(event) {
-    if ( event ) {
-        event.preventDefault();
-    }
-    if ( !player.isLogged() ) {
-        this.windowAuth.open('login');
-    }
 };
 
 // WindowStatsWin
@@ -470,25 +381,6 @@ Game.prototype.onWindowGamesSelectEpisode = function() {
     });
 };
 
-// WindowAuth
-/**
- * @method onWindowAuthClickLogin
- * @param {Object} loginData
- */
-Game.prototype.onWindowAuthClickLogin = function(loginData) {
-    indicator.show();
-    player.login(loginData);
-};
-
-/**
- * @method onWindowAuthClickRegister
- * @param {Object} registerData
- */
-Game.prototype.onWindowAuthClickRegister = function(registerData) {
-    indicator.show();
-    player.register(registerData);
-};
-
 // WindowFirstTime
 
 /**
@@ -533,7 +425,6 @@ Game.prototype.onPreloaderComplete = function() {
 
     } else if ( this.options.customLevel ) {
         if ( !this.isGameLoaded ) {
-            player.silentLogin();
             createjs.Ticker.setFPS(gameOptions.get('fps'));
         }
         this.startNewGame(this.options.customLevel.split(':')[0], 'custom:' + this.options.customLevel.split(':')[1]);
@@ -562,7 +453,6 @@ Game.prototype.onPreloaderComplete = function() {
             }
         }
         if ( !this.isGameLoaded ) {
-            player.silentLogin();
             createjs.Ticker.setFPS(gameOptions.get('fps'));
         }
         if ( episode.getManifest().splashscreen && !core.helperBrowser.isMobile ) {

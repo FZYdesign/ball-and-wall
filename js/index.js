@@ -59,20 +59,6 @@ init = function() {
     }
     new app.Game(options);
 
-    if ( !app.gameOptions.get('window-options:cookieInfo') ) {
-        $([
-            '<div id="cookie">',
-                i18._(isChromeApp ? 'usage-data-info' : 'cookie-info'),
-            '</div>'
-        ].join('')).appendTo(document.body).find('.btn').on('click', function(event) {
-            event.preventDefault();
-
-            app.gameOptions.set('window-options', {cookieInfo: true});
-            $(event.target).parents('#cookie').remove();
-        });
-    }
-    // fork me
-    $('.fork-me').show();
 };
 
 if ( app.gameOptions.isLoaded() ) {

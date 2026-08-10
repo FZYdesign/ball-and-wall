@@ -3,7 +3,6 @@ import utilsNumber from '../core/utils/number.js';
 import i18 from '../i18/_.js';
 import WindowEpisodeWin from './episode-win.js';
 import core from '../core/_.js';
-import player from '../player.js';
 
 var
     /**
@@ -50,17 +49,6 @@ RoundWin.prototype.header = function() {
  * @method model
  */
 RoundWin.prototype.model = function() {
-    var adsTarget = 'win' + (core.helperAds.getScreenClass() == 'big' ? '_728x90' : ''),
-        adsContainer;
-
-    if ( core.helperApp.platform() == 'chrome' ) {
-        adsContainer = {tag: 'webview', src: API_ADDR + 'ads-chrome.html/' + adsTarget};
-    } else {
-        adsContainer = {tag: 'iframe', src: API_ADDR + 'ads-web.html/' + adsTarget,
-            scrolling: 'no', frameborder: '0', vspace: '0', marginheight: '0', marginwidth: '0',
-            hspace: '0', allowtransparency: 'true'};
-    }
-
     return {
         tag: 'div', className: 'tab-contents', childs: [
             {tag: 'div', className: 'win-cont', childs: [
@@ -90,25 +78,7 @@ RoundWin.prototype.model = function() {
                         {tag: 'td', className: 'name td-score',
                             html: i18._('score')},
                         {tag: 'td', id: 'win-score', className: 'value td-score', html: '0'}
-                    ]},
-                    {tag: 'tr', childs: [
-                        {tag: 'td', className: 'name td-share-buttons', colspan: 2,
-                            childs: [
-                                {tag: 'a', href: '#', className: 'share-facebook', childs: [
-                                    {tag: 'img', src: SS + 'images/share-fb-button.png', alt: ''}
-                                ]},
-                                {tag: 'a', href: '#', className: 'share-google', childs: [
-                                    {tag: 'img', src: SS + 'images/share-google-button.png', alt: ''}
-                                ]},
-                                {tag: 'a', href: '#', className: 'share-twitter', childs: [
-                                    {tag: 'img', src: SS + 'images/share-twitter-button.png', alt: ''}
-                                ]}
-                            ]}
                     ]}
-                ]},
-                {tag: 'div', className: 'ads ads-' + core.helperAds.getScreenClass(), childs: [
-                    core.helperAds.isOn() ? {tag: 'div', className: 'ads-label', html: 'advertisement'} : {},
-                    core.helperAds.isOn() ? adsContainer : {}
                 ]}
             ]},
             {tag: 'div', className: 'row buttons', childs: [
@@ -143,19 +113,10 @@ RoundWin.prototype.open = function(data) {
     _data = data;
     WindowBase.prototype.open.call(this, data);
 
-    if ( data.isCustom ) {
-        this._activateShareButtons();
-    }
     if ( _data.round === _data.maxRound && !data.isCustom && EPISODES.length > 1 ) {
         setTimeout(function() {
             episodeWindow.open(data);
         }, 500);
-    }
-    if ( core.helperApp.platform() == 'chrome' ) {
-        document.querySelector('webview').addEventListener('newwindow', function(event) {
-            event.preventDefault();
-            window.open(event.targetUrl);
-        });
     }
 };
 
@@ -163,12 +124,7 @@ RoundWin.prototype.open = function(data) {
  * @method onRequestComplete
  * @param {Object} resp
  */
-RoundWin.prototype.onRequestComplete = function(resp) {
-    if ( !resp || resp.result != 'ok' ) {
-        return;
-    }
-    this._activateShareButtons(resp.response.id);
-};
+RoundWin.prototype.onRequestComplete = function(resp) {};
 
 /**
  * @method onRequestFailure
@@ -266,33 +222,6 @@ RoundWin.prototype._buildHtml = function() {
     chain.splice(0, 1)[0].call(this);
 
     return this;
-};
-
-/**
- * @method _activateShareButtons
- */
-RoundWin.prototype._activateShareButtons = function() {
-    var bindParams, isCustomLevel = this.options.isCustom;
-
-    this.content.find('.td-share-buttons').css('visibility', 'visible');
-    this.content.find('.td-share-buttons').animate({
-        opacity: 1
-    });
-    bindParams = _data;
-
-    $.each(this.content.find('.td-share-buttons a'), function(index, element) {
-        var el = $(element),
-            id = el.attr('class').replace('share-', '');
-
-        el.bind('click', function(event) {
-            event.preventDefault();
-            core.helperShare.open(id, {
-                url: encodeURIComponent(isCustomLevel ? API_ADDR + location.pathname.substr(1) : API_ADDR),
-                title: encodeURIComponent(core.utilsString.substitute(i18._('round-win.share-title'), bindParams)),
-                desc: encodeURIComponent(core.utilsString.substitute(i18._('round-win.share-description'), bindParams))
-            });
-        });
-    });
 };
 
 export default RoundWin;

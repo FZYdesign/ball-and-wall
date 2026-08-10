@@ -27,80 +27,8 @@ body {
     -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
-body.class-404-page #a-game-dashboard {
-    display: none !important;
-}
-body.class-policy-privacy-page {
-    overflow: auto;
-}
 a {
     text-decoration: none;
-}
-.adblock-message {
-    padding: 0 50px;
-    color: #fff;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    -webkit-justify-content: center;
-    -moz-justify-content: center;
-    align-items: center;
-    -webkit-align-items: center;
-    -moz-align-items: center;
-}
-.adblock-game-preview-left, .adblock-game-preview-right, .adblock-game-preview-left-bottom, .adblock-game-preview-right-bottom {
-    position: absolute;
-}
-.adblock-game-preview-left {
-    left: 0;
-    top: 0;
-}
-.adblock-game-preview-right {
-    right: 0;
-    top: 0;
-}
-.adblock-game-preview-left-bottom {
-    left: 0;
-    bottom: 0;
-}
-.adblock-game-preview-right-bottom {
-    right: 0;
-    bottom: 0;
-}
-
-.ads-label {
-    background-color: #ccc;
-    border-radius: 0 0 5px 0;
-    color: #333;
-    font-size: 10px;
-    left: -1px;
-    margin: 0;
-    padding: 0 7px;
-    position: absolute;
-    top: -4px;
-}
-.ads {
-    border: 4px solid #cccccc;
-    border-left-width: 1px;
-    border-right-width: 1px;
-    position: relative;
-    text-align: center;
-    overflow: hidden;
-}
-
-.app-chrome .ads-small {
-    height: 69px;
-}
-.app-chrome .ads-big {
-    height: 98px;
-}
-.app-chrome .ads-small webview {
-    width: 468px;
-    height: 64px;
-}
-.app-chrome .ads-big webview {
-    width: 728px;
-    height: 90px;
 }
 
 canvas {
@@ -128,19 +56,6 @@ canvas#a-game-dashboard {
     z-index: 15;
 }
 
-#a-auth-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 798px;
-    margin: auto;
-    z-index: 20;
-}
-#a-auth {
-    display: none;
-    cursor: pointer;
-}
 #a-container {
     visibility: hidden;
     /*padding-top: 160px;*/
@@ -205,54 +120,7 @@ canvas#a-game-dashboard {
     margin: 6px auto 0 auto;
 }
 
-#cookie {
-    font-size: 13px;
-    position: fixed;
-    bottom: 5px;
-    left: 5px;
-    background-color: #eee;
-    color: #111;
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 110;
-}
-#cookie .btn {
-    margin-left: 10px;
-    vertical-align: text-top;
-}
-#social-addons {
-    display: none;
-}
-#___plusone_0 {
-    overflow: hidden;
-    position: fixed !important;
-    opacity: 1 !important;
-    z-index: 90 !important;
-    right: 8px;
-    bottom: 45px;
-}
-#fb_plugin {
-    border: medium none;
-    bottom: 10px;
-    height: 21px;
-    opacity: 1 !important;
-    z-index: 90 !important;
-    overflow: hidden;
-    position: fixed;
-    right: 8px;
-    width: 130px;
-}
-
 /** policy-privacy **/
-body.class-policy-privacy-page .colgrid {
-    margin-top: 40px;
-}
-body.class-policy-privacy-page h2 {
-    color: #ccc;
-}
-body.class-policy-privacy-page p {
-    color: #aaa;
-}
 
 /** tools **/
 .font-black {
@@ -266,36 +134,6 @@ body.class-policy-privacy-page p {
 }
 
 /** indicator **/
-#indicator-container {
-    background-color: #FFF;
-    border: 1px solid #CCC;
-    left: 50%;
-    right: 50%;
-    margin-left: -130px;
-    position: absolute;
-    padding: 10px;
-    top: -110px;
-    width: 250px;
-    z-index: 100;
-    box-shadow: 0 0 25px #000;
-    -webkit-box-shadow: 0 0 25px #000;
-    -moz-box-shadow: 0 0 25px #000;
-    -moz-border-radius-bottomright: 20px;
-    -moz-border-radius-bottomleft: 20px;
-    border-bottom-right-radius: 20px;
-    border-bottom-left-radius: 20px;
-}
-#indicator-container span {
-    font-size: 11px;
-    display: block;
-    margin: auto;
-    width: 100px;
-}
-#indicator-container img {
-    display: block;
-    margin: auto;
-    width: 220px;
-}
 
 /** windows **/
 .lbx-window {

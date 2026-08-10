@@ -1,6 +1,4 @@
 export default {
-    'cookie-info': 'This site uses cookies. By using this site you accept privacy policy and you agree to use cookies according to actual web browser settings.<div class="small primary btn"><a href="#">Yes, I understand.</a></div>',
-    'usage-data-info': 'This app collect anonymouse stats like app views, time spent on game etc. <br/>By using this game you accept privacy policy. <label for="a" style="font-weight: bold"><input id="a" type="checkbox"/> Send anonymous usage data.</label><div class="small primary btn"><a href="#">Close</a></div>',
     'back-to-main-page': 'Back to main page',
     'not-supported': 'Not supported',
     'on': 'On',
@@ -16,14 +14,12 @@ export default {
     'logout': 'Logout',
     'loading': 'Loading',
     'selected': 'selected',
-    'welcome-player': 'Welcome',
     'time': 'Time',
     'score': 'Score',
     'speed': 'Speed',
     'lives': 'Lives',
     'round': 'Round',
     'episode': 'Episode',
-    'guest': 'Guest',
     'game-over': 'Game Over',
     'clear-level': 'Clear',
     'load-save': 'Load/Save',
@@ -36,8 +32,6 @@ export default {
     'your-stats': 'Your stats',
     'global-stats': 'Global stats',
     // auth button
-    'auth-button-logged': '<img src="{flag_src}" alt="">&nbsp;&nbsp;Hello {player_name}!',
-    'auth-button-unlogged': 'Login/Signup',
     // auth dashboard window - stats tab
     'stats-not-found': 'Not found',
     'stats-player': 'Player',
@@ -48,10 +42,6 @@ export default {
     'stats-created': 'Win time',
     'stats-filter': 'Change filter',
     // auth dashboard window - panel
-    'auth-panel:account-from': 'Account from',
-    'auth-panel:last-login': 'Last valid login',
-    'auth-panel:player-country': 'Player country',
-    'auth-panel:most-played': 'Most episodes played',
     // auth dashboard window - filter
     'by-episode': 'Episode',
     'by-episode:all-episodes': 'All episodes',
@@ -67,20 +57,6 @@ export default {
     'time-range:today': 'Today',
     'time-range:last-week': 'Last week',
     'time-range:all-time': 'All time',
-    // auth window - login and register
-    'auth-register-info': 'Register your player name by registering in <strong>Ball And Wall</strong> you will get access to functionalities that only registered users have.',
-    'auth-register-error': 'Wrong data entered. Check login or password and try again<br/>or try use another nickname.',
-    'auth-login-info': 'Login as a player in <strong>Ball And Wall</strong> or if you don\'t have account yet register with link "Go to register form".',
-    'auth-login-error': 'Wrong data entered. <br/>Check login or password and try again.',
-    'auth-nickname': 'Login',
-    'auth-nickname-placeholder': 'Type player nickname here',
-    'auth-password': 'Password',
-    'auth-password-placeholder': 'Type password here',
-    'auth-register': 'Register',
-    'auth-login': 'Login',
-    'auth-go-to-login': 'Go to login form',
-    'auth-go-to-register': 'Go to register form',
-    'auth-connect-via': 'Connect via',
     // games window
     'games-header': 'Choose episode',
     'games-episode:space': 'Space',
@@ -106,10 +82,8 @@ export default {
     'round-win-retry': 'Retry round',
     'round-win-next-round': 'Go to next round',
     'round-win-select-episode': 'Select episode',
-    'round-win.share-title': 'Next level in Ball And Wall',
-    'round-win.share-description': 'It took me {time} seconds and gave me {score} points :) Check it!',
     // episode-win window
-    'episode-win-header': 'Congratulation {player}!',
+    'episode-win-header': 'Congratulation!',
     'episode-win-content:space': 'You finished an episode <strong>{episode}</strong>. This surely means that the world beyond stars aren\'t even a tiny problem for you. You\'re like a Star trek Captain, but can you dare to defeat the weird and colorful world created by a crazy Pegasus geek?',
     'episode-win-content:pegasus': 'You finished an episode <strong>{episode}</strong>. You\'re simply the best! You\'ve made it till the end and you showed real class and skills cracking Pegasus episode. Platform game trip you can unhook in your check list.',
     // preload indicator
@@ -155,7 +129,6 @@ export default {
     'help-contact-sending': 'Sending message...',
     'help-contact-sent': 'This message was sent successfully.',
     //
-    'dashboard-auth-unlogged': 'Click here to \nlogin or register',
     'alert-title': 'Alert',
     'confirm-title': 'Confirm',
     'confirm-change-language': 'You have changed the language to <strong>{lang}</strong> to show changes it is required to refresh page. Do you want to do it now?',

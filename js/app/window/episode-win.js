@@ -1,6 +1,5 @@
 import WindowBase from './_base.js';
 import i18 from '../i18/_.js';
-import player from '../player.js';
 
 function EpisodeWin() {
     WindowBase.call(this);
@@ -25,7 +24,7 @@ EpisodeWin.prototype = Object.create(WindowBase.prototype, {
  * @method header
  */
 EpisodeWin.prototype.header = function() {
-    return i18._('episode-win-header').replace('{player}', player.getName());
+    return i18._('episode-win-header');
 };
 
 /**

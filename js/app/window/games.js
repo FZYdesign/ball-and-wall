@@ -35,27 +35,13 @@ Games.prototype.header = function() {
  * @method model
  */
 Games.prototype.model = function() {
-    var adsTarget = 'games' + (core.helperAds.getScreenClass() == 'big' ? '_728x90' : ''),
-        onPlayClick = $.proxy(this.onPlayClick, this),
-        adsContainer;
-
-    if ( core.helperApp.platform() == 'chrome' ) {
-        adsContainer = {tag: 'webview', src: API_ADDR + 'ads-chrome.html/' + adsTarget};
-    } else {
-        adsContainer = {tag: 'iframe', src: API_ADDR + 'ads-web.html/' + adsTarget,
-            scrolling: 'no', frameborder: '0', vspace: '0', marginheight: '0', marginwidth: '0',
-            hspace: '0', allowtransparency: 'true'};
-    }
+    var onPlayClick = $.proxy(this.onPlayClick, this);
 
     return {
         tag: 'div', className: 'games-wrapper', childs: [
             {tag: 'div', className: 'games-window', childs: []},
             {tag: 'div', className: 'option-item show-on-start checkbox', childs: []},
-            {tag: 'div', className: 'ads ads-' + core.helperAds.getScreenClass(), childs: [
-                core.helperAds.isOn() ? {tag: 'div', className: 'ads-label', html: 'advertisement'} : {},
-                core.helperAds.isOn() ? adsContainer : {}
-            ]},
-            {tag: 'div', className: 'game-button-cont', styles: core.helperAds.isOn() ? {} : {marginTop: 24, paddingBottom: 44},
+            {tag: 'div', className: 'game-button-cont', styles: {marginTop: 24, paddingBottom: 44},
                 childs: [{tag: 'div', className: 'medium primary btn icon-right icon-arrow-right ' +
                                 (this.options.game == 'pegasus' ? 'warning' : ''), childs: [
                     {tag: 'a', href: '#', html: i18._('games-start-game'), events: [{click: onPlayClick}]}

@@ -32,7 +32,6 @@ export default function() {
         {id: 'c-btn-help', src: FULLADDR + 'images/episodes/space/btn-help.png'},
         {id: 'c-btn-options', src: FULLADDR + 'images/episodes/space/btn-options.png'},
         {id: 'c-btn-play', src: FULLADDR + 'images/episodes/space/btn-play.png'},
-        {id: 'c-btn-user', src: FULLADDR + 'images/episodes/space/btn-user.png'},
         {id: 'c-particle-big-steel', src: FULLADDR + 'images/episodes/space/particles/big/default.png'},
         // particle small
         {id: 'c-particle-small-default', src: FULLADDR + 'images/episodes/space/particles/small/default.png'},

@@ -165,7 +165,9 @@ Base.prototype._buildHtml = function() {
     if ( this.showOverlay ) {
         this.overlay = this.builder.buildDomModel(document.body, overlay);
     }
-    contentClass = 'lbx-window ' + (core.helperAds.isOn() ? 'has-ads' : 'no-ads') + ' ' + (this.className || '');
+    // The layout has always resolved to no-ads; the ad slots are gone entirely
+    // now, but the class still carries the sizing rules the modals depend on.
+    contentClass = 'lbx-window no-ads ' + (this.className || '');
     content = {tag: 'div', className: contentClass, styles: {visibility: 'hidden'},
         childs: [
             this.showCloseButton ? {tag: 'a', id: 'exit', events: [{click: this.close.bind(this)}]} : {},

@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { prepare } from './game-page.mjs';
 
+/**
+ * The editor is no longer linked from the game page -- it is a tool, not part of
+ * playing -- so it is reached by URL. That it still boots on its own is what
+ * these cover; boot.spec.mjs asserts the link is gone.
+ */
 test.describe('levels editor', () => {
     test('boots and renders the block palette', async ({ page }) => {
         const { consoleErrors, failedRequests } = await prepare(page);
@@ -17,12 +22,4 @@ test.describe('levels editor', () => {
         expect(consoleErrors, `console:\n${consoleErrors.join('\n')}`).toEqual([]);
     });
 
-    test('is reachable from the game page', async ({ page }) => {
-        await prepare(page);
-        await page.goto('/index_dev.html');
-
-        const link = page.locator('#a-level-editor');
-
-        await expect(link).toHaveAttribute('href', 'levels-editor.html');
-    });
 });

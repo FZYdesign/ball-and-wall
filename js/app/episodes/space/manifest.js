@@ -63,7 +63,6 @@ export default function() {
             width: 417,
             height: 214,
             buttons: [
-                {type: 'Bitmap', x: 12 * r, y: 113 * r, args: 'c-btn-user', event: 'clickUser'},
                 {type: 'Bitmap', x: 21 * r, y: 144 * r, args: 'c-btn-play', event: 'clickPlay'},
                 {type: 'Bitmap', x: 45 * r, y: 169 * r, args: 'c-btn-options', event: 'clickOptions'},
                 {type: 'Bitmap', x: 73 * r, y: 184 * r, args: 'c-btn-help', event: 'clickHelp'},
