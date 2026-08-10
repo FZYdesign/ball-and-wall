@@ -281,8 +281,8 @@ function(WindowBase, utilsNumber, i18, WindowEpisodeWin, core, player) {
         });
         bindParams = _data;
 
-        $.each(this.content.find('.td-share-buttons a'), function(index, el) {
-            var el = $(el),
+        $.each(this.content.find('.td-share-buttons a'), function(index, element) {
+            var el = $(element),
                 id = el.attr('class').replace('share-', '');
 
             el.bind('click', function(event) {

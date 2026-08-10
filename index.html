@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Ball And Wall - Simple arkanoid style game</title>
 
@@ -12,7 +12,7 @@
     <meta name="msapplication-tap-highlight" content="no">
     <meta property="og:site_name" content="Ball And Wall">
     <meta property="og:title" content="Ball And Wall">
-    <meta property="og:url" content="http://ballandwall.com/">
+    <meta property="og:url" content="https://ballandwall.com/">
     <meta property="og:title" content="Ball And Wall">
     <meta property="og:image" content="images/icons/128x128.png">
 
@@ -30,16 +30,24 @@
         require.config({
             baseUrl: SS + 'js',
             paths: {
-                fancyselect: '../bower_components/fancyselect/fancySelect',
-                q: '../bower_components/q/q',
-                md5: '../bower_components/js-md5/js/md5.min'
+                fancyselect: '../vendor/fancyselect/fancySelect',
+                q: '../vendor/q/q',
+                md5: '../vendor/js-md5/md5.min'
             }
         });
     </script>
 </head>
 <body oncontextmenu="return false;" class="class-index-page">
-    <a style="position: absolute; right: 0; top: 0; z-index: 10;" href="https://github.com/budnix/ball-and-wall" class="fork-me">
-        <img style="border: 0; height: 149px; width: 149px;" src="http://aral.github.com/fork-me-on-github-retina-ribbons/right-dusk-blue@2x.png" alt="Fork me on GitHub">
+    <!--
+        Self-contained ribbon. The original pulled a PNG from aral.github.com over
+        plain http: that host is gone and the request was blocked as mixed content
+        on any https deployment.
+    -->
+    <a style="position: absolute; right: 0; top: 0; z-index: 10;" href="https://github.com/budnix/ball-and-wall" class="fork-me" aria-label="Fork me on GitHub">
+        <svg width="149" height="149" viewBox="0 0 149 149" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <path d="M149 0v149L0 0z" fill="#2d4b6e"/>
+            <text x="98" y="45" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" transform="rotate(45 98 45)">Fork me on GitHub</text>
+        </svg>
     </a>
     <div id="indicator-container">
         <img src="images/indicator.gif" alt="Loading ..." />
@@ -58,7 +66,7 @@
             <div id="a-game-bottom-line"></div>
         </div>
     </div>
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="vendor/jquery/jquery.min.js"></script>
     <script src="js/lib/createjs/createjs.min.js"></script>
     <script src="js/lib/createjs/soundjs-0.5.2.min.js"></script>
     <script src="dist/output.min.js"></script>

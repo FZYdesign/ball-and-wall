@@ -70,9 +70,9 @@ function() {
      * @param {String} keyName
      */
     Keyboard.prototype.isPressed = function(keyName) {
-        var keyName = keyName.split('|');
-        
-        return keyName.filter(function(key) {
+        var keyNames = keyName.split('|');
+
+        return keyNames.filter(function(key) {
             return _keys[key];
         }).length > 0;
     };

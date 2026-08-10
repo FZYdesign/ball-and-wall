@@ -1,21 +1,33 @@
 {
   "name": "ball-and-wall",
-  "version": "1.0.0",
-  "description": "Arkanoid style game",
+  "version": "1.1.0",
+  "description": "Arkanoid style HTML5 game",
   "main": "index.html",
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-concat": "^0.5.1",
-    "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-cssmin": "^0.12.2",
-    "grunt-contrib-htmlmin": "^0.4.0",
-    "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify": "^0.8.0",
-    "grunt-processhtml": "^0.3.7"
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "node scripts/vendor.mjs",
+    "vendor": "node scripts/vendor.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
+    "test": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "fancyselect": "1.0.3",
+    "jquery": "3.7.1",
+    "js-md5": "0.9.2",
+    "q": "1.5.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.0",
+    "globals": "^16.5.0"
   },
   "repository": {
     "type": "git",

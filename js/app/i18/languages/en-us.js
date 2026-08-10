@@ -114,11 +114,11 @@ function() {
         'round-win-next-round': 'Go to next round',
         'round-win-select-episode': 'Select episode',
         'round-win.share-title': 'Next level in Ball And Wall',
-        'round-win.share-description': 'It took me {time} seconds and gave me {score} points :) Check it!',
+        'round-win.share-description': 'It took me {time} seconds and gave me {score} points :) Check it!',
         // episode-win window
         'episode-win-header': 'Congratulation {player}!',
         'episode-win-content:space': 'You finished an episode <strong>{episode}</strong>. This surely means that the world beyond stars aren\'t even a tiny problem for you. You\'re like a Star trek Captain, but can you dare to defeat the weird and colorful world created by a crazy Pegasus geek?',
-        'episode-win-content:pegasus': 'You finished an episode <strong>{episode}</strong>. You\'re simply the best! You\'ve made it till the end and you showed real class and skills cracking Pegasus episode. Platform game trip you can unhook in your check list.',
+        'episode-win-content:pegasus': 'You finished an episode <strong>{episode}</strong>. You\'re simply the best! You\'ve made it till the end and you showed real class and skills cracking Pegasus episode. Platform game trip you can unhook in your check list.',
         // preload indicator 
         'preloader-header': 'Loading resources...',
         'preloader-progress': 'Load progress',
@@ -169,27 +169,27 @@ function() {
         'confirm-change-fps': 'You have changed frames per second to <strong>{fps}FPS</strong> to show changes it is required to refresh page. Do you want to do it now?',
         // first time window
         'first-time-slide-1-title': 'Tip #1: Handling menu',
-        'first-time-slide-1-desc': 'By using navigation buttons you can log in to your account or create new one, change settings or choose your favorite level and start the game.',
-        'first-time-slide-1-desc-list': [
-            'Login/Signup', 
-            'Choose episode or game level', 
-            'Game settings', 
-            'Game rules'
-        ],
-        'first-time-slide-2-title': 'Tip #2: Game progress',
-        'first-time-slide-2-desc': 'If you are in the game you would definitely need some information about it. Now you should know how many rounds are left, how many lives you have and how many points you gained.',
-        'first-time-slide-2-desc-list': [
-            'Lives left', 
-            'Current level', 
-            'Level time duration', 
-            'Current ball speed',
-            'Your points'
-        ],
-        'first-time-slide-3-title': 'Tip #3: Controls',
-        'first-time-slide-3-desc': 'Your goal is to keep your ball in the air as long as you can. Win points, pick bonuses and become number one on Game Rating.',
-        'first-time-slide-3-desc-list': [
-            'You can move paddle with your mouse, your touchpad or by keyboard (<strong>left</strong> arrow and <strong>right</strong> arrow). You can also use <strong>space</strong>, <strong>enter</strong> or <strong>left mouse button (LMB)</strong> to release ball.'
-        ],
+        'first-time-slide-1-desc': 'By using navigation buttons you can log in to your account or create new one, change settings or choose your favorite level and start the game.',
+        'first-time-slide-1-desc-list': [
+            'Login/Signup', 
+            'Choose episode or game level', 
+            'Game settings', 
+            'Game rules'
+        ],
+        'first-time-slide-2-title': 'Tip #2: Game progress',
+        'first-time-slide-2-desc': 'If you are in the game you would definitely need some information about it. Now you should know how many rounds are left, how many lives you have and how many points you gained.',
+        'first-time-slide-2-desc-list': [
+            'Lives left', 
+            'Current level', 
+            'Level time duration', 
+            'Current ball speed',
+            'Your points'
+        ],
+        'first-time-slide-3-title': 'Tip #3: Controls',
+        'first-time-slide-3-desc': 'Your goal is to keep your ball in the air as long as you can. Win points, pick bonuses and become number one on Game Rating.',
+        'first-time-slide-3-desc-list': [
+            'You can move paddle with your mouse, your touchpad or by keyboard (<strong>left</strong> arrow and <strong>right</strong> arrow). You can also use <strong>space</strong>, <strong>enter</strong> or <strong>left mouse button (LMB)</strong> to release ball.'
+        ],
         // levels-editor page
         'le-header': 'Levels Editor',
         'le-episodes-header': 'Episodes:',

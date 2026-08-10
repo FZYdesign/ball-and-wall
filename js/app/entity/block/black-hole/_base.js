@@ -44,7 +44,7 @@ function(BlockBase, EntityBase, particle, stage, gameOptions, preloader, core) {
         for ( j = 0; j < len; j++ ) {
             var distance = Math.random() * 40 * core.helperApp.pixelRatio() + (17 * core.helperApp.pixelRatio());
 
-            p = new particle.createNew({
+            p = particle.createNew({
                 shape: 'circle',
                 radius: Math.random() * core.helperApp.pixelRatio() + 0.1,
                 color: options.type.color

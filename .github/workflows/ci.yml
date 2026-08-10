@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop, dev]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # `npm ci` runs the postinstall vendor sync, so this also proves that the
+      # browser-facing files we copy out of node_modules still exist upstream.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # The build asserts that every AMD dependency resolves inside the bundle,
+      # so a broken module id fails here rather than as a 404 in the browser.
+      - run: npm run build

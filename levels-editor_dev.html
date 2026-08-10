@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Ball And Wall - Simple arkanoid style game</title>
 
@@ -12,7 +12,7 @@
     <meta name="msapplication-tap-highlight" content="no">
     <meta property="og:site_name" content="Ball And Wall">
     <meta property="og:title" content="Ball And Wall">
-    <meta property="og:url" content="http://ballandwall.com/">
+    <meta property="og:url" content="https://ballandwall.com/">
     <meta property="og:title" content="Ball And Wall">
     <meta property="og:image" content="images/icons/128x128.png">
 
@@ -43,7 +43,7 @@
     <!-- build:css dist/levels-editor.css -->
     <link rel="stylesheet" href="css/levels-editor.css">
     <!-- /build -->
-    <link rel="stylesheet" href="bower_components/fancyselect/fancySelect.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="vendor/fancyselect/fancySelect.css" type="text/css" media="screen" />
     <!-- build:js js/_config_prod.js -->
     <script src="js/_config_dev.js"></script>
     <!-- /build -->
@@ -52,9 +52,9 @@
         require.config({
             baseUrl: SS + 'js',
             paths: {
-                fancyselect: '../bower_components/fancyselect/fancySelect',
-                q: '../bower_components/q/q',
-                md5: '../bower_components/js-md5/js/md5.min'
+                fancyselect: '../vendor/fancyselect/fancySelect',
+                q: '../vendor/q/q',
+                md5: '../vendor/js-md5/md5.min'
             }
         });
     </script>
@@ -123,7 +123,7 @@
             </div>
         </div>
     </div>
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="vendor/jquery/jquery.min.js"></script>
     <script src="js/lib/createjs/createjs.min.js"></script>
     <script src="js/lib/createjs/soundjs-0.5.2.min.js"></script>
     <!-- build:js dist/output.min.js -->

@@ -1,6 +1,17 @@
+# Editors / local tooling
 .idea
-node_modules/
-bower_components/
+.vscode/
+*.swp
+.claude/settings.local.json
+
+# OS
 .DS_Store
-.DS_Store/
+
+# Dependencies
+node_modules/
+
+# Generated: `npm install` / `npm run vendor` recreates this from node_modules
+vendor/
+
+# Generated: `npm run build` recreates this
 dist/
