@@ -99,6 +99,14 @@ Dashboard.prototype.getRound = function() {
 };
 
 /**
+ * @method getShop
+ * @return {DashboardShop}
+ */
+Dashboard.prototype.getShop = function() {
+    return this.shop;
+};
+
+/**
  * @method update
  */
 Dashboard.prototype.update = function() {
@@ -136,6 +144,7 @@ Dashboard.prototype._build = function() {
     this.speed = new dashboard.Speed(this);
     this.lives = new dashboard.Lives(this);
     this.round = new dashboard.Round(this);
+    this.shop = new dashboard.Shop(this);
 
     if ( !this.stage ) {
         return;
@@ -148,6 +157,11 @@ Dashboard.prototype._build = function() {
     this.stage.addChild(this.score.entity);
     this.stage.addChild(this.speed.entity);
     this.stage.addChild(this.round.entity);
+
+    // Episodes that have not been given a place for it do not get one.
+    if ( this.shop.entity ) {
+        this.stage.addChild(this.shop.entity);
+    }
 
     $.each(episode.getManifest().dashboard.buttons, function(i, obj) {
         var o = new createjs[obj.type]();

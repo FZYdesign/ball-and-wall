@@ -154,12 +154,20 @@ canvas#a-game-dashboard {
     -o-transform: scale(0.1);
     -o-transition: -o-transform 350ms ease-out 0s;
     -o-transition-property: opacity, -o-transform;
+    /* Unprefixed, because window/_base.js sets `transform` inline to scale a
+     * window that is bigger than the viewport, and the two have to be the same
+     * property for the open animation to run to the fitted size. The origin is
+     * the centre so scaling keeps the window centred where _center() put it. */
+    transform: scale(0.1);
+    transition: transform 350ms ease-out 0s, opacity 350ms ease-out 0s;
+    transform-origin: 50% 50%;
 }
 .lbx-showed {
     opacity: 1;
     -moz-transform: scale(1);
     -webkit-transform: scale(1);
     -o-transform: scale(1);
+    transform: scale(1);
 }
 .lbx-overlay {
     background-color: #000;
@@ -1163,4 +1171,455 @@ body.a-scaled-layout #a-hud-toggle.a-hud-toggle-open span::after {
  */
 a, button, .btn, .option-item-entry, .lbx-window {
     touch-action: manipulation;
+}
+
+/* --- Shop ------------------------------------------------------------------
+ * The window is laid out fluidly rather than at fixed pixel offsets like the
+ * dialogs around it: the breakpoint stylesheets impose a width on .lbx-window
+ * (310px under 560px wide, the whole viewport on a small landscape phone) and
+ * the list has to survive all of them. window/_base.js scales the whole window
+ * down if it is still taller than the viewport.
+ */
+.lbx-shop {
+    width: 700px;
+    height: 500px;
+}
+.lbx-shop .lbx-content {
+    display: flex;
+    flex-direction: column;
+    height: 460px;
+    box-sizing: border-box;
+    padding: 0 12px 8px 12px;
+    overflow: hidden;
+}
+.lbx-shop .shop-window {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+.lbx-shop .tab-buttons {
+    flex: none;
+}
+.lbx-shop .shop-balance {
+    flex: none;
+    padding: 6px 2px;
+    font-size: 15px;
+    text-align: right;
+}
+.lbx-shop .shop-balance-label {
+    color: #666;
+    margin-right: 6px;
+}
+.lbx-shop .shop-balance-value {
+    font-family: 'Orion-Pax', sans-serif;
+    font-size: 19px;
+    color: #1c6ea4;
+}
+.lbx-shop .shop-message {
+    flex: none;
+    margin: 0 0 6px 0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+.lbx-shop .shop-message-ok {
+    background-color: #e2f3e2;
+    color: #2b6b2b;
+}
+.lbx-shop .shop-message-error {
+    background-color: #fbe6e6;
+    color: #97302f;
+}
+.lbx-shop .shop-message-pending {
+    background-color: #eef2f7;
+    color: #40566e;
+}
+/* The scrolling region. `min-height: 0` is what lets a flex item shrink below
+ * the height of its own content -- without it the list pushes the window open
+ * and the scrollbar never appears. */
+.lbx-shop .tab-contents {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background-color: transparent;
+}
+.lbx-shop .shop-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.lbx-shop .shop-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-bottom: 1px dotted #ccc;
+}
+.lbx-shop .shop-entry:last-child {
+    border-bottom: none;
+}
+.lbx-shop .shop-icon {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    line-height: 38px;
+    text-align: center;
+    font-size: 20px;
+    color: #1c6ea4;
+    background-color: #e7eef4;
+    border-radius: 8px;
+}
+.lbx-shop .shop-entry-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.lbx-shop .shop-name {
+    display: block;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+}
+.lbx-shop .shop-desc {
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #777;
+}
+.lbx-shop .shop-owned {
+    flex: none;
+    font-size: 12px;
+    color: #888;
+}
+.lbx-shop .shop-tag {
+    flex: none;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background-color: #f0a30a;
+    color: #fff;
+    font-size: 11px;
+}
+.lbx-shop .shop-buy,
+.lbx-shop .shop-pay {
+    flex: none;
+    min-width: 92px;
+    text-align: center;
+}
+/* Affordability is shown, not enforced here: the wallet refuses the purchase
+ * anyway, and a button that still reacts can say why. */
+.lbx-shop .shop-disabled {
+    opacity: 0.45;
+}
+.lbx-shop .shop-pending {
+    opacity: 0.6;
+    pointer-events: none;
+}
+.lbx-shop .shop-notice {
+    margin: 10px 4px 0 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #888;
+}
+
+/* --- Bought items, beside the play field -----------------------------------
+ * Fixed to the right margin the letterboxed field leaves on a landscape phone,
+ * mirroring the dashboard toggle on the left. Listed in UI_CHROME in
+ * input/pointer.js so that tapping an item does not also throw the paddle to
+ * the edge of the field.
+ */
+#a-item-bar {
+    position: fixed;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 60;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+}
+#a-item-bar.a-item-bar-muted {
+    opacity: 0.3;
+    pointer-events: none;
+}
+#a-item-bar .a-item {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    cursor: pointer;
+    border: 1px solid rgba(140, 190, 230, 0.5);
+    border-radius: 8px;
+    background: rgba(8, 20, 40, 0.72);
+    color: #9fd4f2;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    touch-action: manipulation;
+}
+#a-item-bar .a-item:active {
+    background: rgba(30, 70, 120, 0.85);
+}
+#a-item-bar .a-item-icon {
+    font-size: 17px;
+    line-height: 36px;
+}
+#a-item-bar .a-item-count {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    min-width: 15px;
+    height: 15px;
+    line-height: 15px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: #f0a30a;
+    color: #21160a;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* --- Coin balance ----------------------------------------------------------
+ * Fixed to the top-right of the viewport, mirroring the dashboard toggle at the
+ * top-left and for the same reason: the field is landscape and the viewport it
+ * is fitted into is wider still, so that corner is letterbox margin rather than
+ * play area. Painting it on the dashboard canvas instead -- where it used to be
+ * -- meant it vanished with the dashboard, which on a phone is parked off
+ * screen for the whole round.
+ *
+ * It takes no pointer events: it is a readout, the trolley on the dashboard is
+ * the way into the shop, and a tap here should drive the paddle exactly as a
+ * tap on the field does.
+ */
+#a-coin-hud {
+    position: fixed;
+    top: 6px;
+    right: 6px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid rgba(140, 190, 230, 0.5);
+    border-radius: 8px;
+    background: rgba(8, 20, 40, 0.72);
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+#a-coin-hud .a-coin-icon {
+    color: #ffd700;
+    font-size: 13px;
+    line-height: 1;
+}
+#a-coin-hud .a-coin-value {
+    font-family: 'Orion-Pax', sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    color: #ffd700;
+}
+
+/* --- MoneyCollect card form ------------------------------------------------
+ * The provider renders its card fields into an iframe inside #card-element;
+ * everything around it is ours. Built by js/app/payment/moneycollect-modal.js
+ * rather than living in the page markup -- see that file for why. It sits above
+ * the game's own modals (z-index 100) because it is opened from one.
+ *
+ * The root is a full-screen layer that is always laid out and never takes a
+ * pointer of its own; its two panels are shown independently. The spinner has
+ * to be able to appear *before* the form does -- creating the payment is a
+ * network round trip, and gating it on the form being open is how it ends up
+ * never showing at all.
+ */
+#mc-payment-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 200;
+    pointer-events: none;
+}
+#mc-payment-root > * {
+    display: none;
+}
+#mc-payment-root.mc-open #mc-payment-overlay {
+    display: block;
+    pointer-events: auto;
+}
+#mc-payment-root.mc-open #mc-payment-container {
+    display: flex;
+    pointer-events: auto;
+}
+#mc-payment-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+}
+/* A column, so that the one part that can be any height -- the provider's card
+ * iframe -- is the only part that scrolls, and Pay now is always on screen.
+ * Letting the whole dialog scroll instead put the button below the fold on a
+ * phone: the iframe is sized by the SDK and is routinely taller than the fields
+ * it contains, so there is no height at which that arrangement is safe.
+ * moneycollect-modal.js narrows `max-height` to the measured viewport and tells
+ * the SDK how much room the iframe actually has. */
+#mc-payment-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* `display` is deliberately absent: `#mc-payment-root > *` above hides these
+     * by default and has the same specificity, so setting it here would win by
+     * source order and leave the card form on screen permanently. The `.mc-open`
+     * rule is what turns it into a flex column. */
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 94%;
+    max-width: 440px;
+    max-height: 92vh;
+    overflow: hidden;
+    padding: 18px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+#mc-payment-title,
+#mc-payment-amount,
+#card-errors,
+#mc-error-message,
+#mc-submit-btn {
+    flex: none;
+}
+#mc-payment-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    /* Without this the form refuses to shrink past its content and takes the
+     * button off the bottom of the dialog again. */
+    min-height: 0;
+}
+#mc-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+#mc-payment-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+#mc-payment-amount {
+    margin: 4px 0 14px 0;
+    font-size: 30px;
+    font-weight: 700;
+    color: #2c6594;
+}
+#card-element {
+    flex: 1 1 auto;
+    /* Holds the space open before the iframe arrives, and is the floor the
+     * fields stay usable at. */
+    min-height: 100px;
+    margin: 10px 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#card-errors,
+#mc-error-message {
+    margin-top: 8px;
+    color: #f44336;
+    font-size: 13px;
+    line-height: 1.4;
+}
+#mc-submit-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    background: #2c6594;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+#mc-submit-btn:disabled {
+    background: #b9c6d2;
+    cursor: not-allowed;
+}
+/* Shown while the order is being created and the card form is loading, which
+ * is a network round trip plus an iframe -- long enough that saying nothing
+ * reads as a dead button. */
+/* A landscape phone has barely 320px of height, and the title, amount and
+ * button were claiming 190 of it before the card fields got any. Trimmed so the
+ * fields still have somewhere to be -- moneycollect-modal.js measures whatever
+ * this leaves rather than assuming a figure. */
+@media (max-height: 420px) {
+    #mc-payment-container {
+        padding: 10px;
+    }
+    #mc-close-btn {
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+    }
+    #mc-payment-title {
+        font-size: 16px;
+    }
+    #mc-payment-amount {
+        margin: 2px 0 8px 0;
+        font-size: 22px;
+    }
+    #card-element {
+        margin: 6px 0;
+    }
+    #mc-submit-btn {
+        margin-top: 8px;
+        padding: 10px;
+        font-size: 15px;
+    }
+}
+
+#mc-payment-loading.mc-open {
+    display: flex;
+    pointer-events: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+}
+#mc-loading-spinner {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 14px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: mc-spin 1s linear infinite;
+}
+#mc-loading-text {
+    color: #fff;
+    font-size: 16px;
+}
+@keyframes mc-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

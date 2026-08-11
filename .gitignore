@@ -10,6 +10,17 @@
 # Dependencies
 node_modules/
 
+# Payment configuration, per environment. Seeded from the committed .env.example
+# by scripts/env.mjs; never committed. Keeping them out of git protects the
+# repository, not the keys -- they are served to the browser. See .env.example
+# for the way to avoid shipping a secret at all.
+.env.dev
+.env.prod
+.env.local
+
+# Generated from the environment file above by scripts/env.mjs.
+js/_config_secrets.js
+
 # Generated: `npm install` / `npm run vendor` recreates this from node_modules
 vendor/
 

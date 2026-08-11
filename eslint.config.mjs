@@ -10,9 +10,12 @@ import globals from 'globals';
 /** Globals defined by js/_config_dev.js and js/_config_prod.js. */
 const configGlobals = {
     API_ADDR: 'readonly',
+    ASSETS: 'readonly',
     ENV: 'readonly',
     EPISODES: 'writable',
     FULLADDR: 'readonly',
+    PAYMENT: 'readonly',
+    PAYMENT_SECRETS: 'readonly',
     REVISION: 'readonly',
     SS: 'readonly',
     VERSION: 'readonly'
@@ -46,7 +49,7 @@ export default [
     js.configs.recommended,
     {
         files: ['js/**/*.js'],
-        ignores: ['js/_config_dev.js', 'js/_config_prod.js'],
+        ignores: ['js/_config_dev.js', 'js/_config_prod.js', 'js/_config_secrets*.js'],
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: 'module',
@@ -85,13 +88,20 @@ export default [
     {
         // These *declare* the configuration globals, and are the last classic
         // scripts left -- they run before the module bundle to set them up.
-        files: ['js/_config_dev.js', 'js/_config_prod.js'],
+        // `off` rather than `readonly`: declaring a name eslint already knows as
+        // a global is what no-redeclare exists to catch.
+        files: ['js/_config_dev.js', 'js/_config_prod.js', 'js/_config_secrets*.js'],
         languageOptions: {
             ecmaVersion: 2020,
             sourceType: 'script',
-            globals: Object.fromEntries(
-                Object.keys(configGlobals).map((name) => [name, 'off'])
-            )
+            globals: {
+                // The config files reach for the credentials through `window`,
+                // which is why the browser set is needed here at all.
+                ...globals.browser,
+                ...Object.fromEntries(
+                    Object.keys(configGlobals).map((name) => [name, 'off'])
+                )
+            }
         },
         rules: {
             // Declaring the globals *is* the point of these two files.
@@ -110,9 +120,22 @@ export default [
         }
     },
     {
-        // Specs run in Node but their page.evaluate() callbacks are serialised and
-        // executed in the browser, so both global sets are legitimately in scope.
-        files: ['tests/**/*.mjs'],
+        // Test fixtures are classic scripts served to the browser -- the stubbed
+        // payment SDK stands in for a hosted third-party file -- so they are
+        // neither modules nor Node.
+        files: ['tests/fixtures/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 2020,
+            sourceType: 'script',
+            globals: globals.browser
+        }
+    },
+    {
+        // These run in Node but their page.evaluate() callbacks are serialised
+        // and executed in the browser, so both global sets are legitimately in
+        // scope. scripts/guide-image.mjs composes an image in a real canvas for
+        // exactly that reason.
+        files: ['tests/**/*.mjs', 'scripts/guide-image.mjs'],
         languageOptions: {
             ecmaVersion: 2023,
             sourceType: 'module',

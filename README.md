@@ -20,7 +20,8 @@ npm install
 
 `npm install` also copies the browser-facing files of the dependencies into
 `vendor/`, which is what the pages load. Re-run it with `npm run vendor` if you
-change a dependency.
+change a dependency. It also creates `js/_config_secrets.js` from
+`.env.dev` and `.env.prod` from `.env.example` — see [Payments](#payments).
 
 ## Develop
 
@@ -35,6 +36,74 @@ edit — there is no bundler, watcher or rebuild step in development.
 
 Serving over HTTP matters: opening the files directly with `file://` breaks module
 loading and canvas image access.
+
+## Preview the build
+
+```sh
+npm run build
+npm run preview
+```
+
+Then open http://localhost:8081/index.html. This serves the *built* pages with
+the cache headers a deployment should use — `dist/*` immutable for a year, the
+pages `no-cache` — so the content hashing is actually exercised. It also checks
+the build first and refuses to start if the pages reference anything missing,
+and prints the bundle sizes and any artifact nothing references.
+
+`npm run preview -- --build` rebuilds first; `--port N` changes the port.
+
+The build obfuscates the JavaScript and emits no source maps. That raises the
+cost of casual tampering — the wallet lives in the browser — but it is not a
+security boundary, and it does not protect a payment secret. Use
+`npm run build -- --no-obfuscate` for a readable bundle with source maps when
+reproducing a production bug.
+
+## Languages
+
+English (`en-us`), Simplified Chinese (`zh-cn`) and Polish (`pl`), switchable in
+the options window and picked from the browser on first run. `zh`, `zh-TW` and
+`zh-HK` all resolve to Simplified Chinese.
+
+Adding one: a table in `js/app/i18/languages/`, an entry in `LANGUAGES` in
+`js/app/i18/i18.js`, a `lang-full-name:<code>` string, and an option in
+`Options.prototype.languages`. It has to translate every key —
+`npm run test:unit` fails on a missing one, because a key with no translation
+prints as `undefined` rather than falling back to English.
+
+## Payments
+
+The shop can take real money through MoneyCollect. Out of the box it does not:
+`js/_config_secrets.js` ships empty and the game falls back to a mock payment
+provider, so everything runs — and the tests pass — with no account.
+
+To turn it on, fill in the environment files. Both are git-ignored and created
+for you by `npm install` (or `npm run env`) from the committed `.env.example`:
+
+```sh
+.env.dev     # read by `npm run dev`
+.env.prod    # read by `npm run build`
+```
+
+```ini
+PAYMENT_MODE=test
+PAYMENT_SDK_URL=https://test-static.moneycollect.com/jssdk/js/MoneyCollect.min.js
+PAYMENT_SERVER_URL=https://test-api.moneycollect.com/api/services/v1/payment
+PAYMENT_API_KEY=test_pu_…
+PAYMENT_SECRET_KEY=            # see below -- prefer leaving this empty
+PAYMENT_ORDER_ENDPOINT=        # your server, if you have one
+```
+
+Switching between the test and production accounts is a matter of which command
+you run; `--env dev|prod` overrides that, and `$BAW_ENV` does too.
+`js/_config_secrets.js` is generated from whichever file applies — do not edit
+it by hand.
+
+**A secret key in an env file is still public.** It is loaded by the browser and
+served from `dist/` in production, so anyone who opens the page can read it, and
+a MoneyCollect secret key can create charges and issue refunds. Git-ignoring the
+files keeps them out of the repository; it does not keep them secret. Set
+`PAYMENT_ORDER_ENDPOINT` to a server of yours that holds the key and proxies
+MoneyCollect's create and status calls, and no secret needs to ship at all.
 
 ## Build
 

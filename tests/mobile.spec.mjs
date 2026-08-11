@@ -126,6 +126,72 @@ for (const label of PHONES) {
             expect((await measure()).covered, 'closing it should park it again').toBe(0);
         });
 
+        test('keeps every dialog inside the viewport', async ({ page }) => {
+            test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
+
+            await prepare(page);
+            await page.goto('/index_dev.html');
+            await waitForBoot(page);
+            await page.waitForTimeout(500);
+
+            // Each dialog is laid out at a fixed pixel size picked by viewport
+            // *width*, so a wide, short landscape phone gets a window taller
+            // than its own screen -- the round chooser on a 863x360 Pixel 7 was
+            // 410px tall, and its Start button could not be reached at all.
+            const dialogs = [
+                ['rounds', () => window.BallAndWall.dashboard.emit('clickPlay')],
+                ['shop', () => window.BallAndWall.dashboard.emit('clickShop')],
+                ['options', () => window.BallAndWall.dashboard.emit('clickOptions')],
+                ['help', () => window.BallAndWall.dashboard.emit('clickHelp')]
+            ];
+
+            for (const [name, open] of dialogs) {
+                await page.evaluate(open);
+                await page.waitForSelector('.lbx-window.lbx-showed', { state: 'visible' });
+                await page.waitForTimeout(500);
+
+                const box = await page.evaluate(() => {
+                    const element = document.querySelector('.lbx-window');
+                    const rect = element.getBoundingClientRect();
+                    const bounds = {
+                        left: rect.left, top: rect.top,
+                        right: rect.right, bottom: rect.bottom
+                    };
+
+                    // The close and minimise buttons sit at top/right: -5px,
+                    // deliberately outside the window box. A window scaled to
+                    // exactly the viewport therefore puts the only way to close
+                    // it off screen, which is what this is really guarding.
+                    element.querySelectorAll('#exit, #minimize').forEach((control) => {
+                        const area = control.getBoundingClientRect();
+
+                        if (!area.width && !area.height) {
+                            return;
+                        }
+                        bounds.left = Math.min(bounds.left, area.left);
+                        bounds.top = Math.min(bounds.top, area.top);
+                        bounds.right = Math.max(bounds.right, area.right);
+                        bounds.bottom = Math.max(bounds.bottom, area.bottom);
+                    });
+
+                    return {
+                        ...bounds,
+                        viewport: { width: window.innerWidth, height: window.innerHeight }
+                    };
+                });
+
+                expect(Math.round(box.top), `${name} above the viewport`).toBeGreaterThanOrEqual(0);
+                expect(Math.round(box.left), `${name} left of the viewport`).toBeGreaterThanOrEqual(0);
+                expect(Math.round(box.bottom), `${name} below the fold`)
+                        .toBeLessThanOrEqual(box.viewport.height);
+                expect(Math.round(box.right), `${name} past the right edge`)
+                        .toBeLessThanOrEqual(box.viewport.width);
+
+                await page.evaluate(() => document.querySelector('.lbx-window #exit').click());
+                await waitForOverlayGone(page);
+            }
+        });
+
         test('closes the dashboard when a round starts', async ({ page }) => {
             test.skip(label === 'iPhone 15', 'portrait shows the orientation prompt');
 

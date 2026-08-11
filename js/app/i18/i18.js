@@ -1,5 +1,6 @@
 import pl from './languages/pl.js';
 import enUs from './languages/en-us.js';
+import zhCn from './languages/zh-cn.js';
 
 /**
  * Available translations, keyed by language code. Replaces a runtime-built
@@ -7,13 +8,33 @@ import enUs from './languages/en-us.js';
  */
 var LANGUAGES = {
     'en-us': enUs,
-    pl: pl
+    pl: pl,
+    'zh-cn': zhCn
+};
+
+/**
+ * Codes a browser reports that no table is keyed by.
+ *
+ * `navigator.language` gives a region tag, and there is no reason for every
+ * region to be its own table -- a `zh-TW` reader is far better served by
+ * Simplified Chinese than by falling through to English, which is what an
+ * unresolved code does.
+ */
+var ALIASES = {
+    zh: 'zh-cn',
+    'zh-hans': 'zh-cn',
+    'zh-hant': 'zh-cn',
+    'zh-sg': 'zh-cn',
+    'zh-tw': 'zh-cn',
+    'zh-hk': 'zh-cn',
+    'zh-mo': 'zh-cn'
 };
 
 var
     _strings = {
         'lang-full-name:pl': 'Polish - Polski',
-        'lang-full-name:en-us': 'English (US) - English (US)'
+        'lang-full-name:en-us': 'English (US) - English (US)',
+        'lang-full-name:zh-cn': 'Chinese (Simplified) - 简体中文'
     },
     _code;
 
@@ -31,13 +52,29 @@ Lang.prototype._ = function(key) {
 };
 
 /**
+ * The table a code actually selects, or null when there is none.
+ *
+ * @method resolve
+ * @param {String} code
+ * @return {String|null}
+ */
+Lang.prototype.resolve = function(code) {
+    code = (code || '').toLowerCase();
+    code = ALIASES[code] || code;
+
+    return Object.prototype.hasOwnProperty.call(LANGUAGES, code) ? code : null;
+};
+
+/**
  * @method setLanguage
  * @param {String} code
  */
 Lang.prototype.setLanguage = function(code) {
-    _code = code;
+    // Stored under the code that was actually applied, so the options window
+    // can mark the right radio and a reload picks the same table.
+    _code = this.resolve(code) || 'en-us';
 
-    $.extend(_strings, LANGUAGES[code] || LANGUAGES['en-us']);
+    $.extend(_strings, LANGUAGES[_code]);
 };
 
 /**
@@ -63,7 +100,7 @@ Lang.prototype.getLanguageName = function(code) {
  * @return {Boolean}
  */
 Lang.prototype.exists = function(code) {
-    return Object.prototype.hasOwnProperty.call(LANGUAGES, code);
+    return this.resolve(code) !== null;
 };
 
 var instance = null;

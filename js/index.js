@@ -16,6 +16,7 @@ import getBrowserLang from './browser-lang.js';
  */
 window.BallAndWall = {
     app: app,
+    coinHud: app.coinHud,
     core: core,
     dashboard: app.dashboard,
     entities: entities,
@@ -23,8 +24,12 @@ window.BallAndWall = {
     gameOptions: app.gameOptions,
     i18: i18,
     input: input,
+    itemBar: app.itemBar,
     levels: app.levels,
-    stage: app.stage
+    payment: app.payment,
+    shop: app.shop,
+    stage: app.stage,
+    wallet: app.wallet
 };
 
 var options = {},
@@ -36,7 +41,9 @@ var options = {},
 init = function() {
     if ( i18.exists(getBrowserLang()) ) {
         if ( !app.gameOptions.get('window-options:lang') ) {
-            app.gameOptions.set('window-options', {lang: getBrowserLang()});
+            // Stored resolved, not raw: the browser reports a region tag
+            // (zh-TW, zh-HK) that no table is keyed by.
+            app.gameOptions.set('window-options', {lang: i18.resolve(getBrowserLang())});
         }
     } else {
         if ( !app.gameOptions.get('window-options:lang') || !i18.exists(app.gameOptions.get('window-options:lang')) ) {

@@ -1,5 +1,25 @@
 import core from '../core/_.js';
 
+var
+    /**
+     * Room left around a fitted window, in CSS pixels.
+     *
+     * The close and minimise buttons are positioned at `top: -5px; right: -5px`
+     * -- deliberately outside the window box -- so a window scaled to exactly
+     * the viewport puts them off screen. That is not a rounding error: on any
+     * short landscape phone the close button was the one control the player
+     * could not reach, and `iphone5-landscape.css` makes the window 100% x 100%,
+     * where it is off screen at every size.
+     *
+     * Reserving the outset unscaled is deliberately conservative -- the buttons
+     * are inside the transform, so they need less than this once scaled.
+     *
+     * @property OUTSET
+     * @static
+     * @private
+     */
+    OUTSET = 8;
+
 function Base() {
     core.EventEmitter.call(this);
     this.name = '';
@@ -9,6 +29,11 @@ function Base() {
     this.showCloseButton = true;
     this.options = {};
     this.closeTimer = null;
+    this.scale = 1;
+    // A window is laid out once, at its authored size, and then fitted to the
+    // viewport. Rotating the device or resizing the window changes what it has
+    // to fit into, so the fit is redone rather than left where it was.
+    $(window).bind('resize orientationchange', $.proxy(this._onViewportChange, this));
 }
 
 Base.prototype = Object.create(core.EventEmitter.prototype, {
@@ -43,11 +68,16 @@ Base.prototype.open = function(options) {
         if ( this.overlay ) {
             this.overlay.show();
         }
+        this._fit();
     } else {
         this.workingHeader = this.header();
         this.workingModel = this.model();
         this._buildHtml();
         this.content.addClass('lbx-showed');
+        // After the class, not before: the open animation runs from the
+        // stylesheet's scale(0.1) to whatever scale actually fits, and an
+        // inline transform set first would be the starting point instead.
+        this._fit();
         this.emit('open');
     }
     document.onmousedown = function() { return true; };
@@ -193,18 +223,74 @@ Base.prototype._buildHtml = function() {
 };
 
 /**
+ * Centres the window and, when it is bigger than the viewport, scales it down
+ * until it fits.
+ *
+ * Every modal is laid out at a fixed pixel size chosen per breakpoint, and the
+ * breakpoints are picked by viewport *width*. A landscape phone is wide and
+ * short -- a 863x360 Pixel 7 gets the 800-wide rules, whose round chooser is
+ * 410px tall -- so the window was taller than the screen and the button at the
+ * bottom of it could not be reached. Clamping the position to `top: 0`, as this
+ * used to, only decides which end gets cut off.
+ *
+ * Scaling rather than reflowing is the same trade the play field makes in
+ * app/stage.js: one factor keeps the composition the artwork was drawn for,
+ * where re-laying-out fifteen fixed-size dialogs would not. It never scales
+ * up, so anything that already fitted is untouched.
+ *
+ * @method _fit
+ * @return {Base}
+ */
+Base.prototype._fit = function() {
+    var w, width, height, scale;
+
+    if ( !this.content ) {
+        return this;
+    }
+    w = $(window);
+    // The window plus the margin its overhanging controls need on every side.
+    width = this.content.outerWidth() + OUTSET * 2;
+    height = this.content.outerHeight() + OUTSET * 2;
+    scale = Math.min(w.width() / width, w.height() / height, 1);
+
+    if ( !isFinite(scale) || scale <= 0 ) {
+        scale = 1;
+    }
+    this.scale = scale;
+    this.content.css(this._center());
+    // scale(1) is left to the stylesheet so an untouched window keeps exactly
+    // the transform -- and the transition -- it always had.
+    this.content.css('transform', scale === 1 ? '' : 'scale(' + scale + ')');
+
+    return this;
+};
+
+/**
+ * The layout position, before scaling. The transform's origin is the centre of
+ * the window, so a box centred here stays centred however far it is scaled
+ * down -- which is why this no longer clamps to zero. Clamping would push the
+ * *layout* box back on screen and take the visible, scaled one off-centre.
+ *
  * @method _center
  */
 Base.prototype._center = function() {
     var pos = {top: 0, left: 0},
         w = $(window);
 
-    pos.left = (w.width() / 2) - (this.content.width() / 2);
-    pos.top = w.scrollTop() + (w.height() / 2) - (this.content.height() / 2);
-    pos.left = pos.left > 0 ? pos.left : 0;
-    pos.top = pos.top > 0 ? pos.top : 0;
+    pos.left = (w.width() / 2) - (this.content.outerWidth() / 2);
+    pos.top = w.scrollTop() + (w.height() / 2) - (this.content.outerHeight() / 2);
 
     return pos;
+};
+
+/**
+ * @method _onViewportChange
+ * @private
+ */
+Base.prototype._onViewportChange = function() {
+    if ( this.content && !this.isMinimized() ) {
+        this._fit();
+    }
 };
 
 export default Base;

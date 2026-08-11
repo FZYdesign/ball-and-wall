@@ -78,6 +78,11 @@ RoundWin.prototype.model = function() {
                         {tag: 'td', className: 'name td-score',
                             html: i18._('score')},
                         {tag: 'td', id: 'win-score', className: 'value td-score', html: '0'}
+                    ]},
+                    {tag: 'tr', childs: [
+                        {tag: 'td', className: 'name td-coins',
+                            html: i18._('shop-coins-earned')},
+                        {tag: 'td', id: 'win-coins', className: 'value td-coins', html: '0'}
                     ]}
                 ]}
             ]},
@@ -168,6 +173,9 @@ RoundWin.prototype._buildHtml = function() {
     this.content.find('table #win-episode').text(_data.episode);
     this.content.find('table #win-round').text(_data.round + '/' + _data.maxRound);
     this.content.find('table #win-lives').text(_data.lives);
+    // Awarded by game.js when the round cleared; shown here so the player can
+    // see the shop being paid for by playing.
+    this.content.find('table #win-coins').text('+' + (_data.coins >> 0));
 
     if ( this.options.round >= this.options.maxRound ) {
         this.content.find('.buttons .secondary a').text(i18._('round-win-select-episode'));

@@ -108,6 +108,7 @@ Options.prototype.main = (function() {
 Options.prototype.languages = [
     {type: 'radio', id: 'lang', items: [
             {name: function() {return i18._('lang-full-name:en-us');}, value: 'en-us'},
+            {name: function() {return i18._('lang-full-name:zh-cn');}, value: 'zh-cn'},
             {name: function() {return i18._('lang-full-name:pl');}, value: 'pl'}
         ]
     }

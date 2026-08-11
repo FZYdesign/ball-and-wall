@@ -26,7 +26,11 @@ var
                         }())
                     },
                     {tag: 'div', className: 'slide-image', childs: [
-                        {tag: 'img', src: SS + 'images/episodes/space/first-time/slide-1.jpg'}
+                        // slide-1.jpg is the original, kept for reference: it
+                        // shows a login button that no longer exists, in the
+                        // slot the shop now occupies. Regenerated from the live
+                        // dashboard -- see the tour note in CLAUDE.md.
+                        {tag: 'img', src: SS + 'images/episodes/space/first-time/slide-1-shop.jpg'}
                     ]}
                 ]
             };

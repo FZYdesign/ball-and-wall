@@ -9,10 +9,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "postinstall": "node scripts/vendor.mjs",
+    "postinstall": "node scripts/vendor.mjs && node scripts/env.mjs",
     "vendor": "node scripts/vendor.mjs",
+    "env": "node scripts/env.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "guide": "node scripts/guide-image.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
@@ -32,7 +35,8 @@
     "@playwright/test": "^1.62.1",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.0",
-    "globals": "^16.5.0"
+    "globals": "^16.5.0",
+    "javascript-obfuscator": "^5.5.0"
   },
   "repository": {
     "type": "git",

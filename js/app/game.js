@@ -12,6 +12,8 @@ import facade from './facade.js';
 import _window from './window/_.js';
 import gameOptions from './game-options.js';
 import episode from './episodes/_.js';
+import rewards from './shop/rewards.js';
+import coinHud from './coin-hud.js';
 
 var
     /**
@@ -50,6 +52,7 @@ function Game(options) {
     this.windowOrientationIndicator = new _window.OrientationIndicator();
     this.windowRounds = new _window.Rounds();
     this.windowRoundWin = new _window.RoundWin();
+    this.windowShop = new _window.Shop();
 
     this.onWindowResize();
     this.onWindowOrientationChange();
@@ -84,12 +87,17 @@ Game.prototype.initEvents = function() {
     this.windowRoundWin.addListener('goToRounds', $.proxy(this.onWindowGamesSelectEpisode, this));
     this.windowRoundWin.addListener('nextRound', $.proxy(this.onWindowRoundWinNextRound, this));
     this.windowRoundWin.addListener('retryRound', $.proxy(this.onWindowRoundWinRetryRound, this));
+    // The shop covers the field like the dashboard panel does, so a round is
+    // held for it in exactly the same way.
+    this.windowShop.addListener('open', $.proxy(this.onWindowShopOpen, this));
+    this.windowShop.addListener('close', $.proxy(this.onWindowShopClose, this));
     core.mediator.addListener('game:game-over', $.proxy(this.onGameOver, this));
     core.mediator.addListener('hud:visibility', $.proxy(this.onDashboardVisibility, this));
     core.mediator.addListener('game:stage-clear', $.proxy(this.onGameClearStage, this));
     dashboard.addListener('clickHelp', $.proxy(this.onBtnHelpClick, this));
     dashboard.addListener('clickOptions', $.proxy(this.onBtnOptionsClick, this));
     dashboard.addListener('clickPlay', $.proxy(this.onBtnStartGameClick, this));
+    dashboard.addListener('clickShop', $.proxy(this.onBtnShopClick, this));
     gameOptions.addListener('change:window-games', $.proxy(this.onEpisodeChange, this));
     preloader.addListener('complete', $.proxy(this.onPreloaderComplete, this));
 };
@@ -238,10 +246,12 @@ Game.prototype.onGameClearStage = function() {
         entities.paddles.destroy();
     }, 0);
     setTimeout($.proxy(function() {
+        var stats;
+
         if ( this.windowRoundWin.isOpened() ) {
             return;
         }
-        this.windowRoundWin.open({
+        stats = {
             isCustom: levels.isCustom(),
             episode: episode.getName(),
             round: levels.getCurrentLevelIndex() + 1,
@@ -249,7 +259,12 @@ Game.prototype.onGameClearStage = function() {
             time: dashboard.getTime().get(),
             lives: dashboard.getLives().get(),
             score: dashboard.getScore().get()
-        });
+        };
+        // Clearing a round is what pays for the shop. Credited here, where the
+        // round is actually cleared, rather than where the summary is drawn --
+        // that markup is rebuilt every time the window opens.
+        stats.coins = rewards.grant(stats);
+        this.windowRoundWin.open(stats);
         sound.play('win');
     }, this), 2000);
 };
@@ -311,6 +326,31 @@ Game.prototype.onBtnOptionsClick = function(event) {
         event.preventDefault();
     }
     this.windowOptions.open();
+};
+
+/**
+ * @method onBtnShopClick
+ * @param {event} event
+ */
+Game.prototype.onBtnShopClick = function(event) {
+    if ( event ) {
+        event.preventDefault();
+    }
+    this.windowShop.open();
+};
+
+/**
+ * @method onWindowShopOpen
+ */
+Game.prototype.onWindowShopOpen = function() {
+    this.holdRound(true);
+};
+
+/**
+ * @method onWindowShopClose
+ */
+Game.prototype.onWindowShopClose = function() {
+    this.holdRound(false);
 };
 
 /**
@@ -401,6 +441,9 @@ Game.prototype.onWindowFirstTimeClose = function() {
  */
 Game.prototype.onPreloaderComplete = function() {
     $('#a-container').css('visibility', 'visible');
+    // Only the game gets the balance readout; the levels editor shares these
+    // modules and has no wallet to speak of.
+    coinHud.attach();
     // The field is sized against whatever sits above it, and that is only
     // laid out for real once the container is shown.
     stage.fit();
@@ -482,7 +525,7 @@ Game.prototype.onPreloaderComplete = function() {
  * @method onWindowFocus
  */
 Game.prototype.onWindowFocus = function() {
-    if ( !this.isPausedByDashboard() ) {
+    if ( !this.isPausedByOverlay() ) {
         createjs.Ticker.setPaused(false);
     }
 
@@ -499,41 +542,55 @@ Game.prototype.onWindowFocus = function() {
  */
 Game.prototype.resumeForNewRound = function() {
     stage.showDashboard(false);
+    this.windowShop.close();
     createjs.Ticker.setPaused(false);
 };
 
 /**
- * Whether the round is being held for the dashboard panel, which covers the
- * field on a small screen. Returning to the tab must not resume behind it.
+ * Whether the round is being held behind something covering the field -- the
+ * dashboard panel on a small screen, or the shop. Returning to the tab must
+ * not resume behind either of them.
  *
- * @method isPausedByDashboard
+ * @method isPausedByOverlay
  * @return {Boolean}
  */
-Game.prototype.isPausedByDashboard = function() {
-    return this.isGameStarted && stage.dashboardVisible;
+Game.prototype.isPausedByOverlay = function() {
+    return this.isGameStarted && (stage.dashboardVisible || this.windowShop.isOpened());
 };
 
 /**
- * The dashboard slid in or out. On a small screen it covers the field, so a
- * round in progress is held while it is open and the clock stops with it --
- * the timer is a plain interval, so pausing the ticker alone would leave it
- * running and inflate the player's time.
+ * Freezes or resumes a round in progress, clock included.
  *
- * @method onDashboardVisibility
- * @param {Boolean} visible
+ * The two have to move together: the timer in dashboard/time.js is a plain
+ * interval, so pausing the ticker on its own leaves it counting and quietly
+ * inflates the player's time.
+ *
+ * @method holdRound
+ * @param {Boolean} held
  */
-Game.prototype.onDashboardVisibility = function(visible) {
+Game.prototype.holdRound = function(held) {
     if ( !this.isGameStarted ) {
         return;
     }
-    createjs.Ticker.setPaused(Boolean(visible));
+    createjs.Ticker.setPaused(Boolean(held));
 
-    if ( visible ) {
+    if ( held ) {
         dashboard.getTime().stop();
     } else {
         // start() without an argument resumes; it does not reset the clock.
         dashboard.getTime().start();
     }
+};
+
+/**
+ * The dashboard slid in or out. On a small screen it covers the field, so a
+ * round in progress is held while it is open.
+ *
+ * @method onDashboardVisibility
+ * @param {Boolean} visible
+ */
+Game.prototype.onDashboardVisibility = function(visible) {
+    this.holdRound(visible);
 };
 
 /**
@@ -552,7 +609,7 @@ Game.prototype.onWindowVisibilityChange = function() {
         createjs.Ticker.setPaused(true);
         sound.stopMusic(true);
     } else {
-        if ( !this.isPausedByDashboard() ) {
+        if ( !this.isPausedByOverlay() ) {
             createjs.Ticker.setPaused(false);
         }
 

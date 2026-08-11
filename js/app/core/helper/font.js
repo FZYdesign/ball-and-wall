@@ -1,4 +1,5 @@
 import helperBrowser from './browser.js';
+import helperAsset from './asset.js';
 
 export default {
     /**
@@ -13,7 +14,9 @@ export default {
         }
         link.rel = 'stylesheet';
 
-        link.href = SS + (ENV == 'prod' ? 'dist/' : 'css/') + fontsCss + REVISION;
+        // Named at runtime, so the build cannot rewrite it to the hashed
+        // filename -- asset.js looks it up in the map the build publishes.
+        link.href = helperAsset.url((ENV == 'prod' ? 'dist/' : 'css/') + fontsCss);
         link.type = 'text/css';
         link.media = 'screen';
         $(document.head).append(link);

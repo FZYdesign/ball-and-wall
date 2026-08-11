@@ -88,6 +88,20 @@ export default function() {
                 font: (15 * r) +  'px \'Orion-Pax\', sans-serif',
                 color: '#ccc'
             },
+            // The empty square at the top of the purple arc, directly above the
+            // play/options/help buttons -- the shop reads as one more of them.
+            // Drawn shapes rather than a sprite, so no new art is needed at 1x
+            // and @2x -- see dashboard/shop.js. The balance is not on the
+            // dashboard at all; it is app/coin-hud.js.
+            shop: {
+                icon: {
+                    x: 10 * r,
+                    y: 106 * r,
+                    size: 34 * r,
+                    color: '#d9c7ef',
+                    hoverColor: '#ffffff'
+                }
+            },
             score: {
                 x: 115 * r,
                 y: core.helperBrowser.name == 'firefox' ? (core.helperBrowser.platform.name == 'win' ? 85 : 93) : (91 * r),

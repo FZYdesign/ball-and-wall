@@ -86,6 +86,18 @@ export default function() {
                 font: '20px \'Quantico\', sans-serif',
                 color: '#ffcc00'
             },
+            // The gap on the bar between the help button and the speed gauge.
+            // This episode is 1x only -- see the pixel-ratio note in CLAUDE.md
+            // -- so the coordinates are not scaled.
+            shop: {
+                icon: {
+                    x: 193,
+                    y: 11,
+                    size: 32,
+                    color: '#ffcc00',
+                    hoverColor: '#ffffff'
+                }
+            },
             score: {
                 x: 728,
                 y: core.helperBrowser.name == 'firefox' ? 19 : 13,

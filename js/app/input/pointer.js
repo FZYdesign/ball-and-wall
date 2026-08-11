@@ -10,7 +10,7 @@ var
      * @property UI_CHROME
      * @static
      */
-    UI_CHROME = '#a-hud-toggle, .lbx-window, .lbx-overlay';
+    UI_CHROME = '#a-hud-toggle, #a-item-bar, #mc-payment-root, .lbx-window, .lbx-overlay';
 
 /**
  * Reports the pointer in *stage* coordinates -- the canvas backing-store

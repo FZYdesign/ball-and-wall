@@ -1,4 +1,5 @@
 import helperApp from './helper/app.js';
+import helperAsset from './helper/asset.js';
 import helperBrowser from './helper/browser.js';
 import helperFont from './helper/font.js';
 import helperFullscreen from './helper/fullscreen.js';
@@ -15,6 +16,7 @@ import Tab from './tab.js';
 
 export default {
     helperApp: helperApp,
+    helperAsset: helperAsset,
     helperBrowser: helperBrowser,
     helperFont: helperFont,
     helperFullscreen: helperFullscreen,

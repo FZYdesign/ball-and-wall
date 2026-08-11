@@ -10,6 +10,20 @@
 /** Matches core/storage/local.js: base namespace + the game-options namespace. */
 export const STORAGE_KEY = 'baw-storage:game-options';
 
+/** The wallet keeps its own namespace, so coins and items seed separately. */
+export const WALLET_KEY = 'baw-storage:wallet';
+
+/**
+ * A wallet a spec can reason about. The game hands a new player a starting
+ * balance, which is fine for a player and useless for an assertion about what a
+ * purchase cost, so every spec starts from a number it chose.
+ */
+export const CLEAN_WALLET = {
+    coins: 1000,
+    items: {},
+    orders: []
+};
+
 /**
  * Sub-objects are merged shallowly by game-options.js, so each one has to be
  * given in full or the defaults for its siblings are lost.
@@ -41,16 +55,35 @@ const IGNORED_CONSOLE = [
  *
  * @param {import('@playwright/test').Page} page
  * @param {Object} [state] overrides merged over CLEAN_STATE
+ * @param {Object} [wallet] overrides merged over CLEAN_WALLET
  * @return {{consoleErrors: string[], failedRequests: string[]}}
  */
-export async function prepare(page, state = {}) {
+export async function prepare(page, state = {}, wallet = {}) {
     const consoleErrors = [];
     const failedRequests = [];
 
     await page.addInitScript(
-        ([key, value]) => window.localStorage.setItem(key, JSON.stringify(value)),
-        [STORAGE_KEY, { ...CLEAN_STATE, ...state }]
+        ([entries]) => entries.forEach(
+            ([key, value]) => window.localStorage.setItem(key, JSON.stringify(value))
+        ),
+        [[
+            [STORAGE_KEY, { ...CLEAN_STATE, ...state }],
+            [WALLET_KEY, { ...CLEAN_WALLET, ...wallet }]
+        ]]
     );
+
+    // js/_config_secrets.js is git-ignored and may hold real payment
+    // credentials on the machine running the suite -- which would silently
+    // switch the gateway off the mock provider and change what these specs are
+    // testing. Every spec starts from none. Routes are matched newest first, so
+    // tests/payment.spec.mjs can still route in its own.
+    for (const pattern of ['**/js/_config_secrets.js', '**/dist/secrets.*.js']) {
+        await page.route(pattern, (route) => route.fulfill({
+            status: 200,
+            contentType: 'text/javascript; charset=utf-8',
+            body: 'var PAYMENT_SECRETS = {};'
+        }));
+    }
 
     page.on('console', (message) => {
         if (message.type() !== 'error' && message.type() !== 'warning') {

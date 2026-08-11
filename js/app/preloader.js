@@ -41,7 +41,7 @@ Preloader.prototype.load = function() {
         $('#css-episode').remove();
 
         link.rel = 'stylesheet';
-        link.href = SS + 'css/episodes/' + episode.getName() + '.css' + REVISION;
+        link.href = core.helperAsset.url('css/episodes/' + episode.getName() + '.css');
         link.type = 'text/css';
         link.id = 'css-episode';
         link.media = 'screen';

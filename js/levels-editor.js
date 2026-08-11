@@ -5,7 +5,9 @@ import getBrowserLang from './browser-lang.js';
 var init = function() {
     if ( i18.exists(getBrowserLang()) ) {
         if ( !app.gameOptions.get('window-options:lang') ) {
-            app.gameOptions.set('window-options', {lang: getBrowserLang()});
+            // Stored resolved, not raw: the browser reports a region tag
+            // (zh-TW, zh-HK) that no table is keyed by.
+            app.gameOptions.set('window-options', {lang: i18.resolve(getBrowserLang())});
         }
     } else {
         if ( !app.gameOptions.get('window-options:lang') || !i18.exists(app.gameOptions.get('window-options:lang')) ) {

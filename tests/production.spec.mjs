@@ -72,6 +72,87 @@ test.describe('production build', () => {
         expect(wide, 'responsive breakpoints did not apply').not.toBe(narrow);
     });
 
+    test('serves every built asset under a content-hashed name', async ({ page }) => {
+        const assets = [];
+
+        page.on('response', (response) => {
+            const path = new URL(response.url()).pathname;
+
+            if (path.startsWith('/dist/')) {
+                assets.push(path);
+            }
+        });
+
+        await prepare(page);
+        await page.goto('/index.html');
+        await waitForBoot(page);
+
+        // The point of the hash is that a changed file arrives under a name the
+        // browser has never seen, so an unhashed one is a file that will be
+        // served stale after a deploy. Source maps ride along on the bundle's
+        // own hashed name.
+        const unhashed = assets.filter(
+            (path) => !/\.[0-9a-f]{8}\.(js|css)(\.map)?$/.test(path)
+        );
+
+        expect(unhashed, 'these would be cached across deploys').toEqual([]);
+        // Includes the two stylesheets named at runtime rather than by a build
+        // block -- the font sheet and the episode sheet -- which only resolve
+        // through the map the build publishes.
+        expect(assets.length).toBeGreaterThanOrEqual(4);
+    });
+
+    test('ships obfuscated code, and no source maps', async ({ page }) => {
+        const bundles = [];
+
+        page.on('response', (response) => {
+            const path = new URL(response.url()).pathname;
+
+            if (path.startsWith('/dist/') && path.endsWith('.js')) {
+                bundles.push(response);
+            }
+        });
+
+        await prepare(page);
+        await page.goto('/index.html');
+        await waitForBoot(page);
+
+        expect(bundles.length).toBeGreaterThan(0);
+
+        for (const response of bundles) {
+            const code = await response.text();
+            const name = new URL(response.url()).pathname;
+
+            // A source map hands back the original sources in full, which would
+            // undo the whole exercise. The build only emits one for the
+            // deliberately readable `--no-obfuscate` build.
+            expect(code, `${name} points at a source map`).not.toContain('sourceMappingURL');
+
+            // Top-level names inside the bundle are local bindings and get
+            // mangled; property names deliberately survive, so this checks the
+            // constructors rather than the API the tests themselves drive.
+            for (const identifier of ['DashboardShop', 'CoinHud', 'MoneyCollectModal']) {
+                expect(code, `${name} still contains ${identifier}`).not.toContain(identifier);
+            }
+            // Strings go into an encoded array, so nothing is greppable either.
+            expect(code, `${name} has readable string literals`)
+                    .not.toContain('Ball And Wall coins');
+        }
+    });
+
+    test('does not serve source maps at all', async ({ page }) => {
+        await prepare(page);
+        await page.goto('/index.html');
+        await waitForBoot(page);
+
+        const bundle = await page.evaluate(
+            () => document.querySelector('script[src^="dist/"][src$=".js"]:last-of-type').getAttribute('src')
+        );
+        const response = await page.request.get(`/${bundle}.map`);
+
+        expect(response.status(), 'a source map is being served next to the bundle').toBe(404);
+    });
+
     test('references no external hosts', async ({ page }) => {
         const external = [];
 

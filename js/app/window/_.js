@@ -10,6 +10,7 @@ import OrientationIndicator from './orientation-indicator.js';
 import PreloaderIndicator from './preloader-indicator.js';
 import Rounds from './rounds.js';
 import RoundWin from './round-win.js';
+import Shop from './shop.js';
 
 export default {
     Base: Base,
@@ -23,5 +24,6 @@ export default {
     OrientationIndicator: OrientationIndicator,
     PreloaderIndicator: PreloaderIndicator,
     Rounds: Rounds,
-    RoundWin: RoundWin
+    RoundWin: RoundWin,
+    Shop: Shop
 };
